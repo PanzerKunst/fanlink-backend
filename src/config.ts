@@ -1,11 +1,9 @@
 type Config = {
   readonly PORT: number;
-  readonly PG_USERNAME: string;
-  readonly PG_PWD: string;
+  readonly DATABASE_URL: string;
 }
 
 export const config: Config = {
   PORT: Number(process.env.PORT!),
-  PG_USERNAME: process.env.PG_USERNAME!,
-  PG_PWD: process.env.PG_PWD!
+  DATABASE_URL: process.env.DATABASE_URL!
 }
