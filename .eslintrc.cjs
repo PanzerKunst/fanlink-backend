@@ -17,4 +17,5 @@ module.exports = {
     "@typescript-eslint/ban-ts-comment": ["error", {"ts-ignore": "allow-with-description"}],
     "@typescript-eslint/no-unused-vars": "off", // Already covered by no-unused-vars
   },
+  ignorePatterns: ["drizzle"]
 }
