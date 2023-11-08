@@ -6,9 +6,9 @@ import cors from "cors"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
-import { insertArtists } from "./DB/Schema/Artists"
+import { insertArtists, selectArtistOfSpotifyId } from "./DB/Schema/Artists"
 
-// Catch unhandled promise rejections
+/* // Catch unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason)
   // Your error logging or cleanup code here
@@ -20,7 +20,7 @@ process.on("uncaughtException", (error) => {
   // Your error logging or cleanup code here
   // It is not safe to continue running the server after an uncaught exception.
   // You should consider shutting down the process gracefully.
-})
+}) */
 
 const app = express()
 const port = config.PORT
@@ -47,14 +47,25 @@ const corsOptions: cors.CorsOptions = {
 app.use(cors(corsOptions))
 
 app.get("/", async (_req, res) => {
-  res.send(JSON.stringify("finkInDb"))
+  try {
+    const fink = await selectArtistOfSpotifyId("2t9yJDJIEtvPmr2iRIdqBf")
+    res.status(200).json(fink)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json(error)
+  }
 })
 
 app.post("/artists", async (req: Request, res: Response) => {
-  const spotifyArtists: SpotifyArtist[] = req.body
-  const insertedArtists = await insertArtists(spotifyArtists)
+  try {
+    const spotifyArtists: SpotifyArtist[] = req.body
+    const insertedArtists = await insertArtists(spotifyArtists)
 
-  res.status(200).json(insertedArtists)
+    res.status(200).json(insertedArtists)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json(error)
+  }
 })
 
 app.listen(port, () => {
