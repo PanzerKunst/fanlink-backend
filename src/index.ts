@@ -69,6 +69,6 @@ app.post("/artists", async (req: Request, res: Response) => {
 })
 
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}/`)
+  console.log(`Server running on http://localhost:${port}/, ${process.env.NODE_ENV} mode`)
   migrateDb()
 })
