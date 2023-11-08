@@ -4,10 +4,14 @@ import { createTableArtists } from "./Schema/Artists"
 import { createTableUsers } from "./Schema/Users"
 import { createTableUserArtists } from "./Schema/UserArtists"
 
-export const sql = postgres(config.DATABASE_URL, {
+const connectionOptions = config.IS_PROD ? {
   debug: true,
-  ssl: config.IS_PROD
-})
+  ssl: { rejectUnauthorized: false }
+} : {
+  debug: true
+}
+
+export const sql = postgres(config.DATABASE_URL, connectionOptions)
 
 /* export async function migrateDb(): Promise<void> {
   const migrationClient = postgres(config.DATABASE_URL, { max: 1 })
