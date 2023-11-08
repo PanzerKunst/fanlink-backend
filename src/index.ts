@@ -6,7 +6,7 @@ import cors from "cors"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
-import { insertArtists, selectArtistOfSpotifyId } from "./DB/Schema/Artists"
+import { insertArtists, selectArtistOfSpotifyId, selectArtistsNotYetStored } from "./DB/Schema/Artists"
 
 /* // Catch unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
@@ -59,7 +59,8 @@ app.get("/", async (_req, res) => {
 app.post("/artists", async (req: Request, res: Response) => {
   try {
     const spotifyArtists: SpotifyArtist[] = req.body
-    const insertedArtists = await insertArtists(spotifyArtists)
+    const notYetStored = await selectArtistsNotYetStored(spotifyArtists)
+    const insertedArtists = await insertArtists(notYetStored)
 
     res.status(200).json(insertedArtists)
   } catch (error) {

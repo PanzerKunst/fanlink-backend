@@ -38,6 +38,10 @@ export async function insertArtist(spotifyArtist: SpotifyArtist): Promise<Artist
 }
 
 export async function insertArtists(spotifyArtists: SpotifyArtist[]): Promise<Artist[]> {
+  if (spotifyArtists.length === 0) {
+    return []
+  }
+
   // @ts-ignore TS2769: No overload matches this call.
   const rows = await sql`INSERT INTO artists (spotify_id, name, created_at) VALUES ${sql(spotifyArtists.map(artist => [artist.id, artist.name, sql`CURRENT_TIMESTAMP`]))}
   RETURNING id, spotify_id, name, created_at`
@@ -46,12 +50,14 @@ export async function insertArtists(spotifyArtists: SpotifyArtist[]): Promise<Ar
 }
 
 export async function selectArtistsNotYetStored(spotifyArtists: SpotifyArtist[]): Promise<SpotifyArtist[]> {
+  const spotifyArtistIds = spotifyArtists.map((spotifyArtist) => spotifyArtist.id)
+
   const rows = await sql`
   SELECT spotify_id
   FROM artists
-  WHERE spotify_id IN (${spotifyArtists.map((spotifyArtist) => spotifyArtist.id)})`
+  WHERE spotify_id IN ${ sql(spotifyArtistIds) }`
 
-  const spotifyIds = rows.map((row) => row.spotify_id)
+  const spotifyIds: string[] = rows.map((row) => row.spotify_id)
 
   return spotifyArtists.filter((spotifyArtist) => !spotifyIds.includes(spotifyArtist.id))
 }
