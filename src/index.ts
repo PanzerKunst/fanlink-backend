@@ -25,7 +25,9 @@ process.on("uncaughtException", (error) => {
 const app = express()
 const port = config.PORT
 
-app.use(express.json())
+// Increases the limit for JSON and URL-encoded payloads from 100kb to 50mb
+app.use(express.json({ limit: "50mb" }))
+app.use(express.urlencoded({ limit: "50mb", extended: true }))
 
 // Configure CORS middleware options
 const corsOptions: cors.CorsOptions = {
@@ -45,12 +47,6 @@ const corsOptions: cors.CorsOptions = {
 
 // Enable CORS with the above options
 app.use(cors(corsOptions))
-
-// Increases the limit for JSON payloads from 100kb to 50mb
-app.use(express.json({ limit: "50mb" }))
-
-// Same as above, for URL-encoded payloads
-app.use(express.urlencoded({ limit: "50mb", extended: true }))
 
 app.get("/", async (_req, res) => {
   try {
