@@ -26,8 +26,9 @@ const app = express()
 const port = config.PORT
 
 // Increases the limit for JSON and URL-encoded payloads from 100kb to 50mb
-app.use(express.json({ limit: "50mb" }))
-app.use(express.urlencoded({ limit: "50mb", extended: true }))
+const payloadLimit = "50mb"
+app.use(express.json({ limit: payloadLimit }))
+app.use(express.urlencoded({ limit: payloadLimit, extended: true }))
 
 // Configure CORS middleware options
 const corsOptions: cors.CorsOptions = {
