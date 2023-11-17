@@ -14,6 +14,10 @@ module.exports = {
     "semi": ["error", "never"],
     "max-len": ["warn", {"code": 150}],
     "no-unused-vars": "error",
+    "no-restricted-syntax": ["error", {
+      selector: "ExportDefaultDeclaration",
+      message: "Prefer named exports."
+    }],
     "@typescript-eslint/ban-ts-comment": ["error", {"ts-ignore": "allow-with-description"}],
     "@typescript-eslint/no-unused-vars": "off", // Already covered by no-unused-vars
   },

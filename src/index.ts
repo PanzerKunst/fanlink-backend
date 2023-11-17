@@ -6,21 +6,7 @@ import cors from "cors"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
-import { insertArtists, selectArtistOfSpotifyId, selectArtistsNotYetStored } from "./DB/Schema/Artists"
-
-/* // Catch unhandled promise rejections
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason)
-  // Your error logging or cleanup code here
-})
-
-// Catch uncaught exceptions
-process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", error)
-  // Your error logging or cleanup code here
-  // It is not safe to continue running the server after an uncaught exception.
-  // You should consider shutting down the process gracefully.
-}) */
+import { insertArtists, selectArtistOfSpotifyId, selectArtistsNotYetStored } from "./DB/Queries/Artists"
 
 const app = express()
 const port = config.PORT

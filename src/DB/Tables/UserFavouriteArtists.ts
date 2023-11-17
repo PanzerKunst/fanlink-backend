@@ -1,12 +1,19 @@
 import { sql } from "../DB"
 
-export async function createTableUserArtists() {
+export async function migrateTableUserFavouriteArtists() {
+  await createTableUserFavouriteArtists()
+}
+
+async function createTableUserFavouriteArtists() {
   await sql`
-  CREATE TABLE IF NOT EXISTS public."userArtists"
+  CREATE TABLE IF NOT EXISTS public."userFavouriteArtists"
   (
     id serial,
+    created_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone,
     user_id integer NOT NULL,
     artist_id integer NOT NULL,
+    is_following boolean NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id)
       REFERENCES public.users (id) MATCH SIMPLE
