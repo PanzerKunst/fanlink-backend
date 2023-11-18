@@ -1,4 +1,3 @@
-import { SpotifyUserProfile } from "../../Models/Spotify/SpotifyUserProfile"
 import { db } from "../DB"
 import { userFavouriteArtists } from "../../../drizzle/schema"
 import { sql } from "drizzle-orm"

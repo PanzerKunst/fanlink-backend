@@ -11,7 +11,7 @@ import { SpotifyUserProfile } from "./Models/Spotify/SpotifyUserProfile"
 import { insertUser, selectUserOfSpotifyId } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists, selectUserFavouriteArtistsNotYetStored } from "./DB/Queries/UserFavouriteArtists"
-import { Artist, User, UserFavouriteArtist } from "./Models/DrizzleModels"
+import { Artist, User } from "./Models/DrizzleModels"
 
 const app = express()
 const port = config.PORT
