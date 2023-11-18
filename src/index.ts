@@ -71,17 +71,11 @@ app.post("/user", async (req: Request, res: Response) => {
 
 app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
   try {
-    const spotifyUserProfile: SpotifyUserProfile = req.body.spotifyUserProfile
+    const user: User = req.body.user
     const spotifyArtists: SpotifyArtist[] = req.body.artists
 
     const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(spotifyArtists)
     await insertArtists(notYetStoredSpotifyArtists)
-
-    const user: User | undefined = await selectUserOfSpotifyId(spotifyUserProfile.id)
-
-    if (!user) {
-      throw new Error(`User with spotifyId ${spotifyUserProfile.id} not found`)
-    }
 
     const userFavourites: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
     const notYetStoredFavourites: Artist[] = await selectUserFavouriteArtistsNotYetStored(user, userFavourites)

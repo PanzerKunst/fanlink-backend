@@ -30,6 +30,19 @@ async function createTableUserFavouriteArtists() {
 }
 
 async function createViewEnhancedUserFavouriteArtists() {
+  const rows = await pgSql`
+  SELECT EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'enhanced_user_favourite_artists'
+  )`
+
+  const row = rows.pop()
+
+  if (row?.exists) {
+    return
+  }
+
   await pgSql`
   CREATE VIEW public.enhanced_user_favourite_artists AS
   SELECT ufa.id,
