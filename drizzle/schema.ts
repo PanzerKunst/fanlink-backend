@@ -1,4 +1,4 @@
-import { pgTable, index, foreignKey, serial, timestamp, integer, boolean, varchar, unique } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, serial, timestamp, integer, boolean, varchar, unique } from "drizzle-orm/pg-core"
 
 import { sql } from "drizzle-orm"
 
@@ -10,14 +10,17 @@ export const userFavouriteArtists = pgTable("user_favourite_artists", {
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
 	isFollowing: boolean("is_following").notNull(),
-	spotifyUserId: varchar("spotify_user_id", { length: 255 }).notNull().references(() => users.spotifyId, { onDelete: "cascade" } ),
-	spotifyArtistId: varchar("spotify_artist_id", { length: 255 }).notNull().references(() => artists.spotifyId, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		fkSpotifyUserId: index("fk_spotify_user_id").on(table.spotifyUserId),
-		fkSpotifyArtistId: index("fk_spotify_artist_id").on(table.spotifyArtistId),
-	}
+});
+
+export const enhancedUserFavouriteArtists = pgTable("enhanced_user_favourite_artists", {
+	id: integer("id"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
+	userId: integer("user_id"),
+	artistId: integer("artist_id"),
+	isFollowing: boolean("is_following"),
+	spotifyArtistId: varchar("spotify_artist_id", { length: 255 }),
+	spotifyUserId: varchar("spotify_user_id", { length: 255 }),
 });
 
 export const users = pgTable("users", {

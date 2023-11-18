@@ -2,7 +2,7 @@ import { pgSql } from "../DB"
 
 export async function migrateTableUserFavouriteArtists() {
   await createTableUserFavouriteArtists()
-  await addColumnsSpotifyUserIdSpotifyArtistId()
+  await createViewEnhancedUserFavouriteArtists()
 }
 
 async function createTableUserFavouriteArtists() {
@@ -29,58 +29,18 @@ async function createTableUserFavouriteArtists() {
   )`
 }
 
-async function addColumnsSpotifyUserIdSpotifyArtistId() {
-  let rows = await pgSql`
-  SELECT EXISTS (
-    SELECT FROM information_schema.columns
-    WHERE table_schema = 'public'
-    AND table_name = 'user_favourite_artists'
-    AND column_name = 'spotify_user_id'
-  )`
-
-  let row = rows.pop()
-
-  if (!row?.exists) {
-    await pgSql`
-    ALTER TABLE IF EXISTS public.user_favourite_artists
-      ADD COLUMN spotify_user_id character varying(255) NOT NULL`
-
-    await pgSql`
-    ALTER TABLE IF EXISTS public.user_favourite_artists
-      ADD FOREIGN KEY (spotify_user_id)
-      REFERENCES public.users (spotify_id) MATCH SIMPLE
-      ON UPDATE NO ACTION
-      ON DELETE CASCADE`
-
-    await pgSql`
-    CREATE INDEX IF NOT EXISTS fk_spotify_user_id
-      ON public.user_favourite_artists(spotify_user_id)`
-  }
-
-  rows = await pgSql`
-  SELECT EXISTS (
-    SELECT FROM information_schema.columns
-    WHERE table_schema = 'public'
-    AND table_name = 'user_favourite_artists'
-    AND column_name = 'spotify_artist_id'
-  )`
-
-  row = rows.pop()
-
-  if (!row?.exists) {
-    await pgSql`
-    ALTER TABLE IF EXISTS public.user_favourite_artists
-      ADD COLUMN spotify_artist_id character varying(255) NOT NULL`
-
-    await pgSql`
-    ALTER TABLE IF EXISTS public.user_favourite_artists
-      ADD FOREIGN KEY (spotify_artist_id)
-      REFERENCES public.artists (spotify_id) MATCH SIMPLE
-      ON UPDATE NO ACTION
-      ON DELETE CASCADE`
-
-    await pgSql`
-    CREATE INDEX IF NOT EXISTS fk_spotify_artist_id
-      ON public.user_favourite_artists(spotify_artist_id)`
-  }
+async function createViewEnhancedUserFavouriteArtists() {
+  await pgSql`
+  CREATE VIEW public.enhanced_user_favourite_artists AS
+  SELECT ufa.id,
+    ufa.created_at,
+    ufa.updated_at,
+    ufa.user_id,
+    ufa.artist_id,
+    ufa.is_following,
+    a.spotify_id AS spotify_artist_id,
+    u.spotify_id AS spotify_user_id
+  FROM public.user_favourite_artists ufa
+  INNER JOIN public.artists a ON ufa.artist_id = a.id
+  INNER JOIN public.users u ON ufa.user_id = u.id`
 }
