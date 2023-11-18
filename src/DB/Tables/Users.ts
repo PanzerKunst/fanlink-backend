@@ -1,4 +1,4 @@
-import { sql } from "../DB"
+import { pgSql } from "../DB"
 
 export async function migrateTableUsers() {
   await createTableUsers()
@@ -6,7 +6,7 @@ export async function migrateTableUsers() {
 }
 
 async function createTableUsers() {
-  await sql`
+  await pgSql`
   CREATE TABLE IF NOT EXISTS public.users
   (
     id serial,
@@ -20,7 +20,7 @@ async function createTableUsers() {
 }
 
 async function addColumnEmail() {
-  const rows = await sql`
+  const rows = await pgSql`
   SELECT EXISTS (
     SELECT FROM information_schema.columns
     WHERE table_schema = 'public'
@@ -34,7 +34,7 @@ async function addColumnEmail() {
     return
   }
   
-  await sql`
+  await pgSql`
   ALTER TABLE IF EXISTS public.users
     ADD COLUMN email character varying(255) NOT NULL UNIQUE`
 }

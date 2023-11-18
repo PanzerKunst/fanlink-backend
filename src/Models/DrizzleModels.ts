@@ -1,3 +1,4 @@
+// @ts-ignore TS6059: File C:/Pro/fanlink-backend/drizzle/schema.ts is not under rootDir C:/Pro/fanlink-backend/src. rootDir is expected to contain all source files.
 import { artists, userFavouriteArtists, users } from "../../drizzle/schema"
 
 export type Artist = typeof artists.$inferSelect; // return type when queried

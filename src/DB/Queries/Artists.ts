@@ -4,44 +4,13 @@ import { Artist, NewArtist } from "../../Models/DrizzleModels"
 import { artists } from "../../../drizzle/schema"
 import { eq, inArray } from "drizzle-orm"
 
-/* export async function insertArtist(spotifyArtist: SpotifyArtist): Promise<Artist> {
-  const rows = await sql`
-  INSERT INTO artists (spotify_id, name, created_at)
-  VALUES (${spotifyArtist.id}, ${spotifyArtist.name}, CURRENT_TIMESTAMP)
-  RETURNING id, spotify_id, name, created_at`
-
-  const row = rows.pop()
-
-  if (!row) {
-    throw new Error("Failed to insert artist")
-  }
-
-  return row as Artist
-} */
-
-export async function insertArtist(spotifyArtist: SpotifyArtist): Promise<Artist> {
-  const query = db.insert(artists).values({
-    spotifyId: spotifyArtist.id,
-    name: spotifyArtist.name,
-  })
-
-  const rows = await query.returning()
-  const row = rows.at(0)
-
-  if (!row) {
-    throw new Error("Failed to insert artist")
-  }
-
-  return row
-}
-
 /* export async function insertArtists(spotifyArtists: SpotifyArtist[]): Promise<Artist[]> {
   if (spotifyArtists.length === 0) {
     return []
   }
 
   // @ts-ignore TS2769: No overload matches this call.
-  const rows = await sql`INSERT INTO artists (spotify_id, name, created_at) VALUES ${sql(spotifyArtists.map(artist => [artist.id, artist.name, sql`CURRENT_TIMESTAMP`]))}
+  const rows = await pgSql`INSERT INTO artists (spotify_id, name, created_at) VALUES ${pgSql(spotifyArtists.map(artist => [artist.id, artist.name, sql`CURRENT_TIMESTAMP`]))}
   RETURNING id, spotify_id, name, created_at`
 
   return rows.map((row) => row as Artist)
@@ -65,10 +34,10 @@ export async function insertArtists(spotifyArtists: SpotifyArtist[]): Promise<Ar
 /* export async function selectArtistsNotYetStored(spotifyArtists: SpotifyArtist[]): Promise<SpotifyArtist[]> {
   const spotifyArtistIds = spotifyArtists.map((spotifyArtist) => spotifyArtist.id)
 
-  const rows = await sql`
+  const rows = await pgSql`
   SELECT spotify_id
   FROM artists
-  WHERE spotify_id IN ${ sql(spotifyArtistIds) }`
+  WHERE spotify_id IN ${ pgSql(spotifyArtistIds) }`
 
   const spotifyIds: string[] = rows.map((row) => row.spotify_id)
 
@@ -87,7 +56,7 @@ export async function selectArtistsNotYetStored(spotifyArtists: SpotifyArtist[])
 }
 
 /* export async function selectArtistOfSpotifyId(spotifyId: string): Promise<Artist | undefined> {
-  const rows = await sql`
+  const rows = await pgSql`
   SELECT id, spotify_id, name, created_at, updated_at
   FROM artists
   WHERE spotify_id = ${spotifyId}
@@ -101,7 +70,6 @@ export async function selectArtistsNotYetStored(spotifyArtists: SpotifyArtist[])
 
   return row as Artist
 } */
-
 
 export async function selectArtistOfSpotifyId(spotifyId: string): Promise<Artist | undefined> {
   const rows = await db.select().from(artists)

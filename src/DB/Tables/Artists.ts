@@ -1,11 +1,11 @@
-import { sql } from "../DB"
+import { pgSql } from "../DB"
 
 export async function migrateTableArtists() {
   await createTableArtists()
 }
 
 async function createTableArtists() {
-  await sql`
+  await pgSql`
   CREATE TABLE IF NOT EXISTS public.artists
   (
     id serial,

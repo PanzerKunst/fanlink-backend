@@ -7,6 +7,9 @@ import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
 import { insertArtists, selectArtistOfSpotifyId, selectArtistsNotYetStored } from "./DB/Queries/Artists"
+import { SpotifyUserProfile } from "./Models/Spotify/SpotifyUserProfile"
+import { insertUser, selectUserOfSpotifyId } from "./DB/Queries/Users"
+import { httpStatusCode } from "./Util/HttpUtils"
 
 const app = express()
 const port = config.PORT
@@ -38,10 +41,29 @@ app.use(cors(corsOptions))
 app.get("/", async (_req, res) => {
   try {
     const fink = await selectArtistOfSpotifyId("2t9yJDJIEtvPmr2iRIdqBf")
-    res.status(200).json(fink)
+    res.status(httpStatusCode.OK).json(fink)
   } catch (error) {
     console.error(error)
-    res.status(500).json(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.post("/user", async (req: Request, res: Response) => {
+  try {
+    const spotifyUserProfile: SpotifyUserProfile = req.body
+    const alreadyStored = await selectUserOfSpotifyId(spotifyUserProfile.id)
+
+    if (alreadyStored) {
+      res.status(httpStatusCode.NO_CONTENT)
+      return
+    }
+
+    const insertedUser = await insertUser(spotifyUserProfile)
+
+    res.status(httpStatusCode.OK).json(insertedUser)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
   }
 })
 
@@ -51,10 +73,10 @@ app.post("/artists", async (req: Request, res: Response) => {
     const notYetStored = await selectArtistsNotYetStored(spotifyArtists)
     const insertedArtists = await insertArtists(notYetStored)
 
-    res.status(200).json(insertedArtists)
+    res.status(httpStatusCode.OK).json(insertedArtists)
   } catch (error) {
     console.error(error)
-    res.status(500).json(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
   }
 })
 
