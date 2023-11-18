@@ -6,10 +6,12 @@ import cors from "cors"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
-import { insertArtists, selectArtistOfSpotifyId, selectArtistsNotYetStored } from "./DB/Queries/Artists"
+import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds, selectSpotifyArtistsNotYetStored } from "./DB/Queries/Artists"
 import { SpotifyUserProfile } from "./Models/Spotify/SpotifyUserProfile"
 import { insertUser, selectUserOfSpotifyId } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
+import { insertUserFavouriteArtists, selectUserFavouriteArtistsNotYetStored } from "./DB/Queries/UserFavouriteArtists"
+import { Artist, User, UserFavouriteArtist } from "./Models/DrizzleModels"
 
 const app = express()
 const port = config.PORT
@@ -51,14 +53,14 @@ app.get("/", async (_req, res) => {
 app.post("/user", async (req: Request, res: Response) => {
   try {
     const spotifyUserProfile: SpotifyUserProfile = req.body
-    const alreadyStored = await selectUserOfSpotifyId(spotifyUserProfile.id)
+    const alreadyStored: User | undefined = await selectUserOfSpotifyId(spotifyUserProfile.id)
 
     if (alreadyStored) {
       res.status(httpStatusCode.NO_CONTENT)
       return
     }
 
-    const insertedUser = await insertUser(spotifyUserProfile)
+    const insertedUser: User = await insertUser(spotifyUserProfile)
 
     res.status(httpStatusCode.OK).json(insertedUser)
   } catch (error) {
@@ -67,13 +69,25 @@ app.post("/user", async (req: Request, res: Response) => {
   }
 })
 
-app.post("/artists", async (req: Request, res: Response) => {
+app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
   try {
-    const spotifyArtists: SpotifyArtist[] = req.body
-    const notYetStored = await selectArtistsNotYetStored(spotifyArtists)
-    const insertedArtists = await insertArtists(notYetStored)
+    const spotifyUserProfile: SpotifyUserProfile = req.body.spotifyUserProfile
+    const spotifyArtists: SpotifyArtist[] = req.body.artists
 
-    res.status(httpStatusCode.OK).json(insertedArtists)
+    const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(spotifyArtists)
+    await insertArtists(notYetStoredSpotifyArtists)
+
+    const user: User | undefined = await selectUserOfSpotifyId(spotifyUserProfile.id)
+
+    if (!user) {
+      throw new Error(`User with spotifyId ${spotifyUserProfile.id} not found`)
+    }
+
+    const userFavourites: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
+    const notYetStoredFavourites: Artist[] = await selectUserFavouriteArtistsNotYetStored(user, userFavourites)
+    await insertUserFavouriteArtists(user, notYetStoredFavourites)
+
+    res.status(httpStatusCode.OK).json(notYetStoredFavourites)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
