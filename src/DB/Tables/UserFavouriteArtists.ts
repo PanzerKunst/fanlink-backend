@@ -52,7 +52,9 @@ async function createViewEnhancedUserFavouriteArtists() {
     ufa.artist_id,
     ufa.is_following,
     a.spotify_id AS spotify_artist_id,
-    u.spotify_id AS spotify_user_id
+    a.name AS artist_name,
+    u.spotify_id AS spotify_user_id,
+    u.name AS user_name
   FROM public.user_favourite_artists ufa
   INNER JOIN public.artists a ON ufa.artist_id = a.id
   INNER JOIN public.users u ON ufa.user_id = u.id`

@@ -1,8 +1,10 @@
 import * as dotenv from "dotenv"
+
 dotenv.config()
 
 import express, { Request, Response } from "express"
 import cors from "cors"
+import _ from "lodash"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
@@ -56,12 +58,11 @@ app.post("/user", async (req: Request, res: Response) => {
     const alreadyStored: User | undefined = await selectUserOfSpotifyId(spotifyUserProfile.id)
 
     if (alreadyStored) {
-      res.status(httpStatusCode.NO_CONTENT)
+      res.status(httpStatusCode.OK).json(alreadyStored)
       return
     }
 
     const insertedUser: User = await insertUser(spotifyUserProfile)
-
     res.status(httpStatusCode.OK).json(insertedUser)
   } catch (error) {
     console.error(error)
@@ -73,6 +74,11 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
   try {
     const user: User = req.body.user
     const spotifyArtists: SpotifyArtist[] = req.body.artists
+
+    if (_.isEmpty(spotifyArtists)) {
+      res.status(httpStatusCode.OK).json([])
+      return
+    }
 
     const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(spotifyArtists)
     await insertArtists(notYetStoredSpotifyArtists)
