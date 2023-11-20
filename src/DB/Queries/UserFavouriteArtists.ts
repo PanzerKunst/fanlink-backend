@@ -1,4 +1,4 @@
-import _ from "lodash"
+import { isEmpty as _isEmpty } from "lodash"
 import { db } from "../DB"
 import { userFavouriteArtists } from "../../../drizzle/schema"
 import { sql } from "drizzle-orm"
@@ -17,7 +17,7 @@ export async function selectUserFavouriteArtistsNotYetStored(user: User, artists
 }
 
 export async function insertUserFavouriteArtists(user: User, artists: Artist[]): Promise<UserFavouriteArtist[]> {
-  if (_.isEmpty(artists)) {
+  if (_isEmpty(artists)) {
     return []
   }
 

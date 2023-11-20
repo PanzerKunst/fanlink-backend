@@ -4,7 +4,7 @@ dotenv.config()
 
 import express, { Request, Response } from "express"
 import cors from "cors"
-import _ from "lodash"
+import { isEmpty as _isEmpty } from "lodash"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
@@ -75,7 +75,7 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
     const user: User = req.body.user
     const spotifyArtists: SpotifyArtist[] = req.body.artists
 
-    if (_.isEmpty(spotifyArtists)) {
+    if (_isEmpty(spotifyArtists)) {
       res.status(httpStatusCode.OK).json([])
       return
     }
