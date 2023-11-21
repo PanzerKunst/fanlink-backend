@@ -52,6 +52,29 @@ app.get("/", async (_req, res) => {
   }
 })
 
+app.get("/user", async (req, res) => {
+  try {
+    const { spotify_id } = req.query
+
+    if (!spotify_id || typeof spotify_id !== "string") {
+      res.status(httpStatusCode.BAD_REQUEST).send("Invalid or missing 'spotify_id' query parameter")
+      return
+    }
+
+    const alreadyStored: User | undefined = await selectUserOfSpotifyId(spotify_id)
+
+    if (!alreadyStored) {
+      res.sendStatus(httpStatusCode.NO_CONTENT)
+      return
+    }
+
+    res.status(httpStatusCode.OK).json(alreadyStored)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
 app.post("/user", async (req: Request, res: Response) => {
   try {
     const spotifyUserProfile: SpotifyUserProfile = req.body
