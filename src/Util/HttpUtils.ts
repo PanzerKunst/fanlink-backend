@@ -1,10 +1,10 @@
 type HttpStatusCode = {
-  OK: number;
-  NO_CONTENT: number;
-  BAD_REQUEST: number,
-  UNAUTHORIZED: number;
-  FORBIDDEN: number;
-  INTERNAL_SERVER_ERROR: number;
+  readonly OK: number;
+  readonly NO_CONTENT: number;
+  readonly BAD_REQUEST: number,
+  readonly UNAUTHORIZED: number;
+  readonly FORBIDDEN: number;
+  readonly INTERNAL_SERVER_ERROR: number;
 }
 
 export const httpStatusCode: HttpStatusCode = {
