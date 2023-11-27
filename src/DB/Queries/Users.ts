@@ -1,14 +1,14 @@
 import { db } from "../DB"
-import { SpotifyUserProfile } from "../../Models/Spotify/SpotifyUserProfile"
 import { eq } from "drizzle-orm"
 import { users } from "../../../drizzle/schema"
-import { User } from "../../Models/DrizzleModels"
+import { NewUser, User } from "../../Models/DrizzleModels"
 
-export async function insertUser(spotifyUserProfile: SpotifyUserProfile): Promise<User> {
+export async function insertUser(newUser: NewUser): Promise<User> {
   const query = db.insert(users).values({
-    spotifyId: spotifyUserProfile.id,
-    name: spotifyUserProfile.display_name,
-    email: spotifyUserProfile.email,
+    spotifyId: newUser.spotifyId,
+    name: newUser.name,
+    email: newUser.email,
+    username: newUser.username
   })
 
   const rows = await query.returning()
@@ -24,6 +24,14 @@ export async function insertUser(spotifyUserProfile: SpotifyUserProfile): Promis
 export async function selectUserOfSpotifyId(spotifyId: string): Promise<User | undefined> {
   const rows = await db.select().from(users)
     .where(eq(users.spotifyId, spotifyId))
+    .limit(1)
+
+  return rows.at(0)
+}
+
+export async function selectUserOfUsername(username: string): Promise<User | undefined> {
+  const rows = await db.select().from(users)
+    .where(eq(users.username, username))
     .limit(1)
 
   return rows.at(0)

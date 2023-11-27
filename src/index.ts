@@ -1,5 +1,4 @@
 import * as dotenv from "dotenv"
-
 dotenv.config()
 
 import express, { Request, Response } from "express"
@@ -9,11 +8,10 @@ import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
 import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds, selectSpotifyArtistsNotYetStored } from "./DB/Queries/Artists"
-import { SpotifyUserProfile } from "./Models/Spotify/SpotifyUserProfile"
-import { insertUser, selectUserOfSpotifyId } from "./DB/Queries/Users"
+import { insertUser, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists, selectUserFavouriteArtistsNotYetStored } from "./DB/Queries/UserFavouriteArtists"
-import { Artist, User } from "./Models/DrizzleModels"
+import { Artist, NewUser, User } from "./Models/DrizzleModels"
 
 const app = express()
 const port = config.PORT
@@ -52,16 +50,39 @@ app.get("/", async (_req, res) => {
   }
 })
 
-app.get("/user", async (req, res) => {
+app.get("/user/spotifyId/:spotifyId", async (req, res) => {
   try {
-    const { spotify_id } = req.query
+    const { spotifyId } = req.params
 
-    if (!spotify_id || typeof spotify_id !== "string") {
-      res.status(httpStatusCode.BAD_REQUEST).send("Invalid or missing 'spotify_id' query parameter")
+    if (spotifyId === "") {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing 'spotifyId' in path")
       return
     }
 
-    const alreadyStored: User | undefined = await selectUserOfSpotifyId(spotify_id)
+    const alreadyStored: User | undefined = await selectUserOfSpotifyId(spotifyId)
+
+    if (!alreadyStored) {
+      res.sendStatus(httpStatusCode.NO_CONTENT)
+      return
+    }
+
+    res.status(httpStatusCode.OK).json(alreadyStored)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.get("/user/username/:username", async (req, res) => {
+  try {
+    const { username } = req.params
+
+    if (username === "") {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing 'username' in path")
+      return
+    }
+
+    const alreadyStored: User | undefined = await selectUserOfUsername(username)
 
     if (!alreadyStored) {
       res.sendStatus(httpStatusCode.NO_CONTENT)
@@ -77,15 +98,15 @@ app.get("/user", async (req, res) => {
 
 app.post("/user", async (req: Request, res: Response) => {
   try {
-    const spotifyUserProfile: SpotifyUserProfile = req.body
-    const alreadyStored: User | undefined = await selectUserOfSpotifyId(spotifyUserProfile.id)
+    const newUser: NewUser = req.body
+    const alreadyStored: User | undefined = await selectUserOfSpotifyId(newUser.spotifyId)
 
     if (alreadyStored) {
       res.status(httpStatusCode.OK).json(alreadyStored)
       return
     }
 
-    const insertedUser: User = await insertUser(spotifyUserProfile)
+    const insertedUser: User = await insertUser(newUser)
     res.status(httpStatusCode.OK).json(insertedUser)
   } catch (error) {
     console.error(error)
