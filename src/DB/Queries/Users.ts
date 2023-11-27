@@ -4,12 +4,7 @@ import { users } from "../../../drizzle/schema"
 import { NewUser, User } from "../../Models/DrizzleModels"
 
 export async function insertUser(newUser: NewUser): Promise<User> {
-  const query = db.insert(users).values({
-    spotifyId: newUser.spotifyId,
-    name: newUser.name,
-    email: newUser.email,
-    username: newUser.username
-  })
+  const query = db.insert(users).values(newUser)
 
   const rows = await query.returning()
   const row = rows.at(0)

@@ -11,7 +11,7 @@ import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds, sele
 import { insertUser, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists, selectUserFavouriteArtistsNotYetStored } from "./DB/Queries/UserFavouriteArtists"
-import { Artist, NewUser, User } from "./Models/DrizzleModels"
+import { Artist, NewLocation, NewUser, User } from "./Models/DrizzleModels"
 
 const app = express()
 const port = config.PORT
@@ -98,13 +98,16 @@ app.get("/user/username/:username", async (req, res) => {
 
 app.post("/user", async (req: Request, res: Response) => {
   try {
-    const newUser: NewUser = req.body
-    const alreadyStored: User | undefined = await selectUserOfSpotifyId(newUser.spotifyId)
+    const newUser: NewUser = req.body.user
+    const alreadyStoredUser: User | undefined = await selectUserOfSpotifyId(newUser.spotifyId)
 
-    if (alreadyStored) {
-      res.status(httpStatusCode.OK).json(alreadyStored)
+    if (alreadyStoredUser) {
+      res.status(httpStatusCode.OK).json(alreadyStoredUser)
       return
     }
+
+    const newLocation: NewLocation = req.body.location
+    const alreadyStoredLocation: Location | undefined = await selectLocationOfGeoapifyPlaceId(newLocation.geoapifyPlaceId)
 
     const insertedUser: User = await insertUser(newUser)
     res.status(httpStatusCode.OK).json(insertedUser)
