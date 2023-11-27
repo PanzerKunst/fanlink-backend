@@ -1,4 +1,4 @@
-import { isEmpty as _isEmpty } from "lodash"
+import _isEmpty from "lodash/isEmpty"
 import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
 import { db } from "../DB"
 import { Artist, NewArtist } from "../../Models/DrizzleModels"

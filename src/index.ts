@@ -3,7 +3,7 @@ dotenv.config()
 
 import express, { Request, Response } from "express"
 import cors from "cors"
-import { isEmpty as _isEmpty } from "lodash"
+import _isEmpty from "lodash/isEmpty"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
@@ -11,7 +11,10 @@ import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds, sele
 import { insertUser, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists, selectUserFavouriteArtistsNotYetStored } from "./DB/Queries/UserFavouriteArtists"
-import { Artist, NewLocation, NewUser, User } from "./Models/DrizzleModels"
+import { Artist, Country, Location, NewCountry, NewLocation, NewUser, User } from "./Models/DrizzleModels"
+import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
+import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
+import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
 
 const app = express()
 const port = config.PORT
@@ -106,10 +109,42 @@ app.post("/user", async (req: Request, res: Response) => {
       return
     }
 
-    const newLocation: NewLocation = req.body.location
-    const alreadyStoredLocation: Location | undefined = await selectLocationOfGeoapifyPlaceId(newLocation.geoapifyPlaceId)
-
     const insertedUser: User = await insertUser(newUser)
+
+    const geoapifyFeature: GeoapifyFeature = req.body.geoapifyFeature
+    const alreadyStoredLocation: Location | undefined = await selectLocationOfGeoapifyPlaceId(geoapifyFeature.place_id)
+
+    if (!alreadyStoredLocation) {
+      let country: Country | undefined = await selectCountryOfCode(geoapifyFeature.country_code)
+
+      if (!country) {
+        const newCountry: NewCountry = {
+          name: geoapifyFeature.country,
+          code: geoapifyFeature.country_code
+        }
+
+        country = await insertCountry(newCountry)
+      }
+
+      const newLocation: NewLocation = {
+        ...geoapifyFeature,
+        geoapifyPlaceId: geoapifyFeature.place_id,
+        countryId: country.id,
+        lon: geoapifyFeature.lon.toString(),
+        lat: geoapifyFeature.lat.toString(),
+        stateCode: geoapifyFeature.state_code,
+        stateCog: geoapifyFeature.state_COG,
+        addressLine1: geoapifyFeature.address_line1,
+        addressLine2: geoapifyFeature.address_line2,
+        departmentCog: geoapifyFeature.department_COG,
+        plusCode: geoapifyFeature.plus_code,
+        plusCodeShort: geoapifyFeature.plus_code_short,
+        resultType: geoapifyFeature.result_type
+      }
+
+      await insertLocation(newLocation)
+    }
+
     res.status(httpStatusCode.OK).json(insertedUser)
   } catch (error) {
     console.error(error)

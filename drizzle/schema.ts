@@ -1,6 +1,4 @@
-import { pgTable, foreignKey, unique, serial, timestamp, varchar, integer, numeric, boolean } from "drizzle-orm/pg-core"
-
-import { sql } from "drizzle-orm"
+import { boolean, integer, numeric, pgTable, serial, timestamp, unique, varchar } from "drizzle-orm/pg-core"
 
 
 export const locations = pgTable("locations", {

@@ -1,4 +1,4 @@
-import { isEmpty as _isEmpty } from "lodash"
+import _isEmpty from "lodash/isEmpty"
 import { db } from "../DB"
 import { userFavouriteArtists } from "../../../drizzle/schema"
 import { sql } from "drizzle-orm"
