@@ -11,7 +11,7 @@ async function createTableUserFavouriteArtists() {
   (
     id serial,
     created_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
-    updated_at timestamp with time zone,
+    updated_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
     user_id integer NOT NULL,
     artist_id integer NOT NULL,
     is_following boolean NOT NULL,
