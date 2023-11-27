@@ -116,20 +116,22 @@ app.post("/user", async (req: Request, res: Response) => {
 
 app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
   try {
-    const user: User = req.body.user
-    const spotifyArtists: SpotifyArtist[] = req.body.artists
+    const favouriteArtists: SpotifyArtist[] = req.body.favouriteArtists
 
-    if (_isEmpty(spotifyArtists)) {
+    if (_isEmpty(favouriteArtists)) {
       res.status(httpStatusCode.OK).json([])
       return
     }
 
-    const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(spotifyArtists)
+    const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(favouriteArtists)
     await insertArtists(notYetStoredSpotifyArtists)
 
-    const userFavourites: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
+    const userFavourites: Artist[] = await selectArtistsOfSpotifyIds(favouriteArtists.map((spotifyArtist) => spotifyArtist.id))
+
+    const user: User = req.body.user
+    const followedArtists: SpotifyArtist[] = req.body.followedArtists
     const notYetStoredFavourites: Artist[] = await selectUserFavouriteArtistsNotYetStored(user, userFavourites)
-    await insertUserFavouriteArtists(user, notYetStoredFavourites)
+    await insertUserFavouriteArtists(user, notYetStoredFavourites, followedArtists)
 
     res.status(httpStatusCode.OK).json(notYetStoredFavourites)
   } catch (error) {

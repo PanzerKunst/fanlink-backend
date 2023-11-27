@@ -3,6 +3,7 @@ import { db } from "../DB"
 import { userFavouriteArtists } from "../../../drizzle/schema"
 import { sql } from "drizzle-orm"
 import { Artist, NewUserFavouriteArtist, User, UserFavouriteArtist } from "../../Models/DrizzleModels"
+import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
 
 export async function selectUserFavouriteArtistsNotYetStored(user: User, artists: Artist[]): Promise<Artist[]> {
   const artistIds = artists.map((artist) => artist.id)
@@ -16,15 +17,19 @@ export async function selectUserFavouriteArtistsNotYetStored(user: User, artists
   return artists.filter((artist) => !storedFavouriteArtistIds.includes(artist.id))
 }
 
-export async function insertUserFavouriteArtists(user: User, artists: Artist[]): Promise<UserFavouriteArtist[]> {
-  if (_isEmpty(artists)) {
+export async function insertUserFavouriteArtists(
+  user: User,
+  favouriteArtists: Artist[],
+  followedSpotifyArtists: SpotifyArtist[]
+): Promise<UserFavouriteArtist[]> {
+  if (_isEmpty(favouriteArtists)) {
     return []
   }
 
-  const userFavouriteArtistsToInsert: NewUserFavouriteArtist[] = artists.map((artist) => ({
+  const userFavouriteArtistsToInsert: NewUserFavouriteArtist[] = favouriteArtists.map((favouriteArtist) => ({
     userId: user.id,
-    artistId: artist.id,
-    isFollowing: true
+    artistId: favouriteArtist.id,
+    isFollowing: followedSpotifyArtists.some((followedSpotifyArtist) => followedSpotifyArtist.id === favouriteArtist.spotifyId)
   }))
 
   const query = db.insert(userFavouriteArtists).values(userFavouriteArtistsToInsert)
