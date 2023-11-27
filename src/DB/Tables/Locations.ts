@@ -8,7 +8,7 @@ async function createTableLocations() {
   await pgSql`
   CREATE TABLE IF NOT EXISTS public.locations
   (
-    id serial NOT NULL,
+    id serial,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     geoapify_place_id character varying(255) NOT NULL UNIQUE,
@@ -23,15 +23,15 @@ async function createTableLocations() {
     suburb character varying(255),
     lon numeric(15, 10) NOT NULL,
     lat numeric(15, 10) NOT NULL,
-    state_code character varying(255),
-    state_cog character varying(255),
+    state_code character varying(8),
+    state_cog character varying(8),
     formatted character varying(255) NOT NULL,
     address_line1 character varying(255),
     address_line2 character varying(255),
     department_cog character varying(255),
     category character varying(255) NOT NULL,
     plus_code character varying(255),
-    plus_code_short character varying(8),
+    plus_code_short character varying(255),
     result_type character varying(255) NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (country_id)

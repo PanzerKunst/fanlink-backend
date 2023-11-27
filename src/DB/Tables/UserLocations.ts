@@ -8,7 +8,7 @@ async function createTableUserLocations() {
   await pgSql`
   CREATE TABLE IF NOT EXISTS public.user_locations
   (
-    id serial NOT NULL,
+    id serial,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     user_id integer NOT NULL,

@@ -20,6 +20,6 @@ export type GeoapifyFeature = {
   category: "administrative" | "populated_place"
   plus_code: string
   plus_code_short?: string
-  result_type: "postcode" | "county" | "suburb"
+  result_type: "postcode" | "county" | "suburb" | "city"
   place_id: string
 }
