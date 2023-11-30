@@ -18,7 +18,7 @@ const connectionOptions = config.IS_PROD ? {
 }
 
 export const pgSql = postgres(config.DATABASE_URL, connectionOptions)
-export const db = drizzle(pgSql/* TODO , { logger: true }*/)
+export const db = drizzle(pgSql,/* TODO  { logger: true } */)
 
 export async function migrateDb(): Promise<void> {
   await migrateTableMusicGenres()

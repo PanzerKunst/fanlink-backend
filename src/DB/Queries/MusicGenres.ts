@@ -1,34 +1,45 @@
-import { eq, sql } from "drizzle-orm"
+import { inArray, sql } from "drizzle-orm"
 import { MusicGenre, NewMusicGenre } from "../../Models/DrizzleModels"
 import { db } from "../DB"
 import { musicGenres } from "../../../drizzle/schema"
+import _isEmpty from "lodash/isEmpty"
 
-export async function insertMusicGenre(newMusicGenre: NewMusicGenre): Promise<MusicGenre> {
-  const query = db.insert(musicGenres).values(newMusicGenre)
-
-  const rows = await query.returning()
-  const row = rows.at(0)
-
-  if (!row) {
-    throw new Error("Failed to insert music genre")
-  }
-
-  return row
-}
-
-export async function selectGenreOfName(name: string): Promise<MusicGenre | undefined> {
+export async function selectMusicGenresNotYetStored(names: string[]): Promise<string[]> {
   const rows = await db.select().from(musicGenres)
-    .where(eq(musicGenres.name, name))
-    .limit(1)
-
-  return rows.at(0)
-}
-
-export async function selectGenresNotYetStored(genreNames: string[]): Promise<string[]> {
-  const rows = await db.select().from(musicGenres)
-    .where(sql`${musicGenres.name} in ${genreNames}`)
+    .where(sql`${musicGenres.name} in ${names}`)
 
   const storedGenreNames: string[] = rows.map((row) => row.name)
 
-  return genreNames.filter((name) => !storedGenreNames.includes(name))
+  return names.filter((name) => !storedGenreNames.includes(name))
+}
+
+export async function insertMusicGenres(names: string[]): Promise<MusicGenre[]> {
+  if (_isEmpty(names)) {
+    return []
+  }
+
+  const uniqueGenres: string[] = Array.from(new Set(names))
+
+  const musicGenresToInsert: NewMusicGenre[] = uniqueGenres.map((name) => ({ name }))
+  const query = db.insert(musicGenres).values(musicGenresToInsert)
+
+  return query.returning()
+}
+
+export async function selectMusicGenresOfIds(ids: number[]): Promise<MusicGenre[]> {
+  if (_isEmpty(ids)) {
+    return []
+  }
+
+  return db.select().from(musicGenres)
+    .where(inArray(musicGenres.id, ids))
+}
+
+export async function selectMusicGenresOfNames(names: string[]): Promise<MusicGenre[]> {
+  if (_isEmpty(names)) {
+    return []
+  }
+
+  return db.select().from(musicGenres)
+    .where(inArray(musicGenres.name, names))
 }

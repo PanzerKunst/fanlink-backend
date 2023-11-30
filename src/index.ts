@@ -11,10 +11,13 @@ import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds, sele
 import { insertUser, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists, selectUserFavouriteArtistsNotYetStored } from "./DB/Queries/UserFavouriteArtists"
-import { Artist, Country, Location, NewCountry, NewLocation, NewUser, User } from "./Models/DrizzleModels"
+import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewUser, User } from "./Models/DrizzleModels"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
 import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
 import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
+import { insertMusicGenres, selectMusicGenresNotYetStored, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
+import { insertArtistMusicGenres, selectArtistMusicGenresNotYetStored, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
+import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 
 const app = express()
 const port = config.PORT
@@ -158,7 +161,7 @@ app.post("/user", async (req: Request, res: Response) => {
 
 // Artists
 
-app.get("/artists", async (req: Request, res: Response) => {
+app.get("/artistsAndTheirGenres", async (req: Request, res: Response) => {
   try {
     let spotifyIds: string[] = []
 
@@ -174,8 +177,9 @@ app.get("/artists", async (req: Request, res: Response) => {
     }
 
     const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyIds)
+    const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)
 
-    res.status(httpStatusCode.OK).json(artists)
+    res.status(httpStatusCode.OK).json(artistAndTheirGenres)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -184,7 +188,7 @@ app.get("/artists", async (req: Request, res: Response) => {
 
 app.post("/artists", async (req: Request, res: Response) => {
   try {
-    const spotifyArtists: SpotifyArtist[] = req.body.artists
+    const spotifyArtists: SpotifyArtist[] = req.body.spotifyArtists
 
     if (_isEmpty(spotifyArtists)) {
       res.status(httpStatusCode.OK).json([])
@@ -192,10 +196,62 @@ app.post("/artists", async (req: Request, res: Response) => {
     }
 
     const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(spotifyArtists)
-    await insertArtists(notYetStoredSpotifyArtists)
+    const insertedArtists: Artist[] = await insertArtists(notYetStoredSpotifyArtists)
+
+    // Insert MusicGenres
+    const genreNames = notYetStoredSpotifyArtists.flatMap(artist => artist.genres)
+    const genresNotYetStored = await selectMusicGenresNotYetStored(genreNames)
+    await insertMusicGenres(genresNotYetStored)
+
+    // TODO: remvoe
+    console.log("await insertMusicGenres(genresNotYetStored)")
+
+    // Insert ArtistMusicGenres
+    /* TODO await Promise.all(insertedArtists.map(async (artist: Artist) => {
+      const genreNamesForArtist = spotifyArtists.find((spotifyArtist) => spotifyArtist.id === artist.spotifyId)!.genres
+      const genresForArtist: MusicGenre[] = await selectMusicGenresOfNames(genreNamesForArtist)
+      const artistMusicGenresNotYetStored: MusicGenre[] = await selectArtistMusicGenresNotYetStored(artist, genresForArtist)
+      await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)
+    })) */
+
+    for (const artist of insertedArtists) {
+      const genreNamesForArtist = spotifyArtists.find((spotifyArtist) => spotifyArtist.id === artist.spotifyId)!.genres
+
+      if (_isEmpty(genreNamesForArtist)) {
+        continue // Skip this iteration
+      }
+
+      // TODO: remvoe
+      console.log("genreNamesForArtist", genreNamesForArtist, artist.name)
+
+      const genresForArtist: MusicGenre[] = await selectMusicGenresOfNames(genreNamesForArtist)
+
+      // TODO: remvoe
+      console.log("genresForArtist", genresForArtist)
+
+      const artistMusicGenresNotYetStored: MusicGenre[] = await selectArtistMusicGenresNotYetStored(artist, genresForArtist)
+
+      // TODO: remvoe
+      console.log("artistMusicGenresNotYetStored", artistMusicGenresNotYetStored)
+
+      await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)
+
+      // TODO: remvoe
+      console.log("await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)")
+
+    }
+
     const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
 
-    res.status(httpStatusCode.OK).json(artists)
+    // TODO: remvoe
+    console.log("const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))")
+
+    const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)
+
+    // TODO: remvoe
+    console.log("const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)", artistAndTheirGenres)
+
+    res.status(httpStatusCode.OK).json(artistAndTheirGenres)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -212,7 +268,7 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
     }
 
     const user: User = req.body.user
-    const followedArtists: Artist[] = req.body.followedArtists
+    const followedArtists: SpotifyArtist[] = req.body.followedArtists
     const notYetStoredFavourites: Artist[] = await selectUserFavouriteArtistsNotYetStored(user, userFavourites)
     await insertUserFavouriteArtists(user, notYetStoredFavourites, followedArtists)
 
