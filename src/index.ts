@@ -211,13 +211,35 @@ app.post("/artists", async (req: Request, res: Response) => {
         continue // Skip this iteration
       }
 
+      // TODO: remvoe
+      console.log("genreNamesForArtist", genreNamesForArtist, artist.name)
+
       const genresForArtist: MusicGenre[] = await selectMusicGenresOfNames(genreNamesForArtist)
+
+      // TODO: remvoe
+      console.log("genresForArtist", genresForArtist)
+
       const artistMusicGenresNotYetStored: MusicGenre[] = await selectArtistMusicGenresNotYetStored(artist, genresForArtist)
+
+      // TODO: remvoe
+      console.log("artistMusicGenresNotYetStored", artistMusicGenresNotYetStored)
+
       await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)
+
+      // TODO: remvoe
+      console.log("await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)")
+
     }
 
     const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
+
+    // TODO: remvoe
+    console.log("const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))")
+
     const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)
+
+    // TODO: remvoe
+    console.log("const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)", artistAndTheirGenres)
 
     res.status(httpStatusCode.OK).json(artistAndTheirGenres)
   } catch (error) {

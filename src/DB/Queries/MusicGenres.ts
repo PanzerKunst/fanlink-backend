@@ -5,6 +5,10 @@ import { musicGenres } from "../../../drizzle/schema"
 import _isEmpty from "lodash/isEmpty"
 
 export async function selectMusicGenresNotYetStored(names: string[]): Promise<string[]> {
+  if (_isEmpty(names)) {
+    return []
+  }
+
   const rows = await db.select().from(musicGenres)
     .where(sql`${musicGenres.name} in ${names}`)
 
