@@ -35,8 +35,8 @@ export async function selectArtistsOfSpotifyIds(spotifyArtistIds: string[]): Pro
 
 export async function selectSpotifyArtistsNotYetStored(spotifyArtists: SpotifyArtist[]): Promise<SpotifyArtist[]> {
   const spotifyArtistIds = spotifyArtists.map((spotifyArtist) => spotifyArtist.id)
-  const artistsOfSpotifyIds = await selectArtistsOfSpotifyIds(spotifyArtistIds)
-  const spotifyIds: string[] = artistsOfSpotifyIds.map((row) => row.spotifyId)
+  const storedArtists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtistIds)
+  const storedArtistSpotifyIds = storedArtists.map(storedArtist => storedArtist.spotifyId)
 
-  return spotifyArtists.filter((spotifyArtist) => !spotifyIds.includes(spotifyArtist.id))
+  return spotifyArtists.filter(spotifyArtist => !storedArtistSpotifyIds.includes(spotifyArtist.id))
 }

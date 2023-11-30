@@ -53,6 +53,9 @@ app.get("/", async (_req, res) => {
   }
 })
 
+
+// Users
+
 app.get("/user/spotifyId/:spotifyId", async (req, res) => {
   try {
     const { spotifyId } = req.params
@@ -152,22 +155,64 @@ app.post("/user", async (req: Request, res: Response) => {
   }
 })
 
-app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
-  try {
-    const favouriteArtists: SpotifyArtist[] = req.body.favouriteArtists
 
-    if (_isEmpty(favouriteArtists)) {
+// Artists
+
+app.get("/artists", async (req: Request, res: Response) => {
+  try {
+    let spotifyIds: string[] = []
+
+    try {
+      spotifyIds = JSON.parse(req.query.spotifyIds as string) as string[]
+    } catch (error) {
+      res.status(httpStatusCode.BAD_REQUEST).json(error)
+    }
+
+    if (_isEmpty(spotifyIds)) {
       res.status(httpStatusCode.OK).json([])
       return
     }
 
-    const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(favouriteArtists)
-    await insertArtists(notYetStoredSpotifyArtists)
+    const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyIds)
 
-    const userFavourites: Artist[] = await selectArtistsOfSpotifyIds(favouriteArtists.map((spotifyArtist) => spotifyArtist.id))
+    res.status(httpStatusCode.OK).json(artists)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.post("/artists", async (req: Request, res: Response) => {
+  try {
+    const spotifyArtists: SpotifyArtist[] = req.body.artists
+
+    if (_isEmpty(spotifyArtists)) {
+      res.status(httpStatusCode.OK).json([])
+      return
+    }
+
+    const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(spotifyArtists)
+    await insertArtists(notYetStoredSpotifyArtists)
+    const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
+
+    res.status(httpStatusCode.OK).json(artists)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
+  try {
+    const userFavourites: Artist[] = req.body.favouriteArtists
+
+    if (_isEmpty(userFavourites)) {
+      res.status(httpStatusCode.OK).json([])
+      return
+    }
 
     const user: User = req.body.user
-    const followedArtists: SpotifyArtist[] = req.body.followedArtists
+    const followedArtists: Artist[] = req.body.followedArtists
     const notYetStoredFavourites: Artist[] = await selectUserFavouriteArtistsNotYetStored(user, userFavourites)
     await insertUserFavouriteArtists(user, notYetStoredFavourites, followedArtists)
 
