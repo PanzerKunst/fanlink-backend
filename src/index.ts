@@ -203,17 +203,7 @@ app.post("/artists", async (req: Request, res: Response) => {
     const genresNotYetStored = await selectMusicGenresNotYetStored(genreNames)
     await insertMusicGenres(genresNotYetStored)
 
-    // TODO: remvoe
-    console.log("await insertMusicGenres(genresNotYetStored)")
-
     // Insert ArtistMusicGenres
-    /* TODO await Promise.all(insertedArtists.map(async (artist: Artist) => {
-      const genreNamesForArtist = spotifyArtists.find((spotifyArtist) => spotifyArtist.id === artist.spotifyId)!.genres
-      const genresForArtist: MusicGenre[] = await selectMusicGenresOfNames(genreNamesForArtist)
-      const artistMusicGenresNotYetStored: MusicGenre[] = await selectArtistMusicGenresNotYetStored(artist, genresForArtist)
-      await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)
-    })) */
-
     for (const artist of insertedArtists) {
       const genreNamesForArtist = spotifyArtists.find((spotifyArtist) => spotifyArtist.id === artist.spotifyId)!.genres
 
@@ -221,35 +211,13 @@ app.post("/artists", async (req: Request, res: Response) => {
         continue // Skip this iteration
       }
 
-      // TODO: remvoe
-      console.log("genreNamesForArtist", genreNamesForArtist, artist.name)
-
       const genresForArtist: MusicGenre[] = await selectMusicGenresOfNames(genreNamesForArtist)
-
-      // TODO: remvoe
-      console.log("genresForArtist", genresForArtist)
-
       const artistMusicGenresNotYetStored: MusicGenre[] = await selectArtistMusicGenresNotYetStored(artist, genresForArtist)
-
-      // TODO: remvoe
-      console.log("artistMusicGenresNotYetStored", artistMusicGenresNotYetStored)
-
       await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)
-
-      // TODO: remvoe
-      console.log("await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)")
-
     }
 
     const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
-
-    // TODO: remvoe
-    console.log("const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))")
-
     const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)
-
-    // TODO: remvoe
-    console.log("const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)", artistAndTheirGenres)
 
     res.status(httpStatusCode.OK).json(artistAndTheirGenres)
   } catch (error) {
