@@ -5,6 +5,7 @@ import { NewUser, User } from "../../Models/DrizzleModels"
 
 export async function insertUser(newUser: NewUser): Promise<User> {
   const query = db.insert(users).values(newUser)
+    .onConflictDoNothing()
 
   const rows = await query.returning()
   const row = rows.at(0)

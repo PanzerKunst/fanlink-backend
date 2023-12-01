@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm"
 
 export async function insertLocation(newLocation: NewLocation): Promise<Location> {
   const query = db.insert(locations).values(newLocation)
+    .onConflictDoNothing()
 
   const rows = await query.returning()
   const row = rows.at(0)

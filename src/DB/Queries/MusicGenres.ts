@@ -13,6 +13,7 @@ export async function insertMusicGenres(names: string[]): Promise<MusicGenre[]> 
 
   const musicGenresToInsert: NewMusicGenre[] = uniqueGenres.map((name) => ({ name }))
   const query = db.insert(musicGenres).values(musicGenresToInsert)
+    .onConflictDoNothing()
 
   return query.returning()
 }

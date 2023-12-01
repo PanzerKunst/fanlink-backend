@@ -16,6 +16,7 @@ export async function insertArtists(spotifyArtists: SpotifyArtist[]): Promise<Ar
   }))
 
   const query = db.insert(artists).values(artistsToInsert)
+    .onConflictDoNothing()
 
   return query.returning()
 }

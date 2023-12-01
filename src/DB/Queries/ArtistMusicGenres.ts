@@ -20,6 +20,7 @@ export async function insertArtistMusicGenres(
   }))
 
   const query = db.insert(artistMusicGenres).values(artistMusicGenresToInsert)
+    .onConflictDoNothing()
 
   return query.returning()
 }

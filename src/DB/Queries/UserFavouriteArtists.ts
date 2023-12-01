@@ -20,6 +20,7 @@ export async function insertUserFavouriteArtists(
   }))
 
   const query = db.insert(userFavouriteArtists).values(userFavouriteArtistsToInsert)
+    .onConflictDoNothing()
 
   return query.returning()
 }

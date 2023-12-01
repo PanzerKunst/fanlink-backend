@@ -5,6 +5,7 @@ import { countries } from "../../../drizzle/schema"
 
 export async function insertCountry(newCountry: NewCountry): Promise<Country> {
   const query = db.insert(countries).values(newCountry)
+    .onConflictDoNothing()
 
   const rows = await query.returning()
   const row = rows.at(0)
