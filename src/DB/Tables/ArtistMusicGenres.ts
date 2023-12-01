@@ -23,6 +23,7 @@ async function createTableArtistMusicGenres() {
       REFERENCES public.music_genres (id) MATCH SIMPLE
       ON UPDATE NO ACTION
       ON DELETE CASCADE
-      NOT VALID
+      NOT VALID,
+    UNIQUE(artist_id, genre_id)
   )`
 }

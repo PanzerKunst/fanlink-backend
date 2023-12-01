@@ -25,7 +25,8 @@ async function createTableUserFavouriteArtists() {
       REFERENCES public.artists (id) MATCH SIMPLE
       ON UPDATE NO ACTION
       ON DELETE CASCADE
-      NOT VALID
+      NOT VALID,
+    UNIQUE(user_id, artist_id)
   )`
 }
 

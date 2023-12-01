@@ -32,11 +32,3 @@ export async function selectArtistsOfSpotifyIds(spotifyArtistIds: string[]): Pro
   return db.select().from(artists)
     .where(inArray(artists.spotifyId, spotifyArtistIds))
 }
-
-export async function selectSpotifyArtistsNotYetStored(spotifyArtists: SpotifyArtist[]): Promise<SpotifyArtist[]> {
-  const spotifyArtistIds = spotifyArtists.map((spotifyArtist) => spotifyArtist.id)
-  const storedArtists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtistIds)
-  const storedArtistSpotifyIds = storedArtists.map(storedArtist => storedArtist.spotifyId)
-
-  return spotifyArtists.filter(spotifyArtist => !storedArtistSpotifyIds.includes(spotifyArtist.id))
-}

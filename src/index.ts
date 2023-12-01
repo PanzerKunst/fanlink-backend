@@ -7,16 +7,16 @@ import _isEmpty from "lodash/isEmpty"
 import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
-import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds, selectSpotifyArtistsNotYetStored } from "./DB/Queries/Artists"
+import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds } from "./DB/Queries/Artists"
 import { insertUser, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
-import { insertUserFavouriteArtists, selectUserFavouriteArtistsNotYetStored } from "./DB/Queries/UserFavouriteArtists"
+import { insertUserFavouriteArtists } from "./DB/Queries/UserFavouriteArtists"
 import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewUser, User } from "./Models/DrizzleModels"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
 import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
 import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
-import { insertMusicGenres, selectMusicGenresNotYetStored, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
-import { insertArtistMusicGenres, selectArtistMusicGenresNotYetStored, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
+import { insertMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
+import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 
 const app = express()
@@ -195,13 +195,11 @@ app.post("/artists", async (req: Request, res: Response) => {
       return
     }
 
-    const notYetStoredSpotifyArtists = await selectSpotifyArtistsNotYetStored(spotifyArtists)
-    const insertedArtists: Artist[] = await insertArtists(notYetStoredSpotifyArtists)
+    const insertedArtists: Artist[] = await insertArtists(spotifyArtists)
 
     // Insert MusicGenres
-    const genreNames = notYetStoredSpotifyArtists.flatMap(artist => artist.genres)
-    const genresNotYetStored = await selectMusicGenresNotYetStored(genreNames)
-    await insertMusicGenres(genresNotYetStored)
+    const genreNames = spotifyArtists.flatMap(artist => artist.genres)
+    await insertMusicGenres(genreNames)
 
     // Insert ArtistMusicGenres
     for (const artist of insertedArtists) {
@@ -219,16 +217,7 @@ app.post("/artists", async (req: Request, res: Response) => {
       // TODO: remvoe
       console.log("genresForArtist", genresForArtist)
 
-      const artistMusicGenresNotYetStored: MusicGenre[] = await selectArtistMusicGenresNotYetStored(artist, genresForArtist)
-
-      // TODO: remvoe
-      console.log("artistMusicGenresNotYetStored", artistMusicGenresNotYetStored)
-
-      await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)
-
-      // TODO: remvoe
-      console.log("await insertArtistMusicGenres(artist, artistMusicGenresNotYetStored)")
-
+      await insertArtistMusicGenres(artist, genresForArtist)
     }
 
     const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
@@ -259,10 +248,9 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
 
     const user: User = req.body.user
     const followedArtists: SpotifyArtist[] = req.body.followedArtists
-    const notYetStoredFavourites: Artist[] = await selectUserFavouriteArtistsNotYetStored(user, userFavourites)
-    await insertUserFavouriteArtists(user, notYetStoredFavourites, followedArtists)
+    await insertUserFavouriteArtists(user, userFavourites, followedArtists)
 
-    res.status(httpStatusCode.OK).json(notYetStoredFavourites)
+    res.status(httpStatusCode.OK).json(userFavourites)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
