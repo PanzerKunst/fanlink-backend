@@ -18,6 +18,10 @@ export async function insertMusicGenres(names: string[]): Promise<MusicGenre[]> 
   return query.returning()
 }
 
+export async function selectAllMusicGenres(): Promise<MusicGenre[]> {
+  return db.select().from(musicGenres)
+}
+
 export async function selectMusicGenresOfIds(ids: number[]): Promise<MusicGenre[]> {
   if (_isEmpty(ids)) {
     return []

@@ -15,7 +15,7 @@ import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewUser
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
 import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
 import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
-import { insertMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
+import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 
@@ -161,7 +161,7 @@ app.post("/user", async (req: Request, res: Response) => {
 
 // Artists
 
-app.get("/artistsAndTheirGenres", async (req: Request, res: Response) => {
+/* app.get("/artistsAndTheirGenres", async (req: Request, res: Response) => {
   try {
     let spotifyIds: string[] = []
 
@@ -184,7 +184,7 @@ app.get("/artistsAndTheirGenres", async (req: Request, res: Response) => {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
   }
-})
+}) */
 
 app.post("/artists", async (req: Request, res: Response) => {
   try {
@@ -260,4 +260,18 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}/, config.IS_PROD: ${config.IS_PROD}`)
   migrateDb()
+})
+
+
+// Music genres
+
+app.get("/musicGenres", async (_req: Request, res: Response) => {
+  try {
+    const musicGenres: MusicGenre[] = await selectAllMusicGenres()
+
+    res.status(httpStatusCode.OK).json(musicGenres)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
 })
