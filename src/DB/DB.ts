@@ -25,14 +25,14 @@ export const db = drizzle(pgSql,/* TODO  { logger: true } */)
 export async function migrateDb(): Promise<void> {
   await migrateTableMusicGenres()
   await migrateTableArtists()
-  await migrateTableArtistMusicGenres()
-  await migrateTableUsers()
-  await migrateTableUserFavouriteArtists()
   await migrateTableCountries()
   await migrateTableLocations()
+  await migrateTableUsers()
+  await migrateTableArtistMusicGenres()
+  await migrateTableUserFavouriteArtists()
   await migrateTableUserLocations()
-  await migrateTableUserRepresentingArtists()
   await migrateTablePosts()
+  await migrateTableUserRepresentingArtists()
 
   console.log("Database migrated")
 }
