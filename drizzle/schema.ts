@@ -1,19 +1,19 @@
-import { pgTable, integer, timestamp, boolean, varchar, unique, serial, foreignKey, numeric, text } from "drizzle-orm/pg-core"
+import { pgTable, foreignKey, unique, serial, timestamp, integer, varchar, numeric, text, boolean } from "drizzle-orm/pg-core"
 
 import { sql } from "drizzle-orm"
 
 
-export const enhancedUserFavouriteArtists = pgTable("enhanced_user_favourite_artists", {
-	id: integer("id"),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
-	userId: integer("user_id"),
-	artistId: integer("artist_id"),
-	isFollowing: boolean("is_following"),
-	spotifyArtistId: varchar("spotify_artist_id", { length: 255 }),
-	artistName: varchar("artist_name", { length: 255 }),
-	spotifyUserId: varchar("spotify_user_id", { length: 255 }),
-	userName: varchar("user_name", { length: 255 }),
+export const userLocations = pgTable("user_locations", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	locationId: integer("location_id").notNull().references(() => locations.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		userLocationsUserIdLocationIdKey: unique("user_locations_user_id_location_id_key").on(table.userId, table.locationId),
+	}
 });
 
 export const countries = pgTable("countries", {
@@ -62,37 +62,6 @@ export const locations = pgTable("locations", {
 	}
 });
 
-export const userLocations = pgTable("user_locations", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	userId: integer("user_id").notNull(),
-	locationId: integer("location_id").notNull().references(() => locations.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		userLocationsUserIdLocationIdKey: unique("user_locations_user_id_location_id_key").on(table.userId, table.locationId),
-	}
-});
-
-export const users = pgTable("users", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	lastLoginAt: timestamp("last_login_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	spotifyId: varchar("spotify_id", { length: 255 }).notNull(),
-	name: varchar("name", { length: 255 }).notNull(),
-	username: varchar("username", { length: 255 }).notNull(),
-	email: varchar("email", { length: 255 }).notNull(),
-},
-(table) => {
-	return {
-		usersSpotifyIdKey: unique("users_spotify_id_key").on(table.spotifyId),
-		usersUsernameKey: unique("users_username_key").on(table.username),
-		usersEmailKey: unique("users_email_key").on(table.email),
-	}
-});
-
 export const userRepresentingArtists = pgTable("user_representing_artists", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -113,6 +82,24 @@ export const posts = pgTable("posts", {
 	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
 	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	content: text("content").notNull(),
+});
+
+export const users = pgTable("users", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	lastSeenAt: timestamp("last_seen_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	spotifyId: varchar("spotify_id", { length: 255 }).notNull(),
+	name: varchar("name", { length: 255 }).notNull(),
+	username: varchar("username", { length: 255 }).notNull(),
+	email: varchar("email", { length: 255 }).notNull(),
+},
+(table) => {
+	return {
+		usersSpotifyIdKey: unique("users_spotify_id_key").on(table.spotifyId),
+		usersUsernameKey: unique("users_username_key").on(table.username),
+		usersEmailKey: unique("users_email_key").on(table.email),
+	}
 });
 
 export const artists = pgTable("artists", {
@@ -157,7 +144,7 @@ export const userFavouriteArtists = pgTable("user_favourite_artists", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	userId: integer("user_id").notNull(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
 	isFollowing: boolean("is_following").notNull(),
 },
@@ -165,4 +152,17 @@ export const userFavouriteArtists = pgTable("user_favourite_artists", {
 	return {
 		userFavouriteArtistsUserIdArtistIdKey: unique("user_favourite_artists_user_id_artist_id_key").on(table.userId, table.artistId),
 	}
+});
+
+export const enhancedUserFavouriteArtists = pgTable("enhanced_user_favourite_artists", {
+	id: integer("id"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
+	userId: integer("user_id"),
+	artistId: integer("artist_id"),
+	isFollowing: boolean("is_following"),
+	spotifyArtistId: varchar("spotify_artist_id", { length: 255 }),
+	artistName: varchar("artist_name", { length: 255 }),
+	spotifyUserId: varchar("spotify_user_id", { length: 255 }),
+	userName: varchar("user_name", { length: 255 }),
 });

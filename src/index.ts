@@ -18,14 +18,15 @@ import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
 import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
-import { insertPost, selectPostOfId } from "./DB/Queries/Posts"
+import { insertPost, selectPostOfId, updatePost } from "./DB/Queries/Posts"
 
 const app = express()
 const port = config.PORT
 
-// Increases the limit for JSON and URL-encoded payloads from 100kb to 50mb
+// Increases the limit for JSON, raw (for files), and URL-encoded payloads from 100kb to 50mb
 const payloadLimit = "50mb"
 app.use(express.json({ limit: payloadLimit }))
+app.use(express.raw({ type: "text/plain", limit: payloadLimit }))
 app.use(express.urlencoded({ limit: payloadLimit, extended: true }))
 
 // Configure CORS middleware options
@@ -287,7 +288,19 @@ app.post("/post", async (req: Request, res: Response) => {
   }
 })
 
-app.get("/posts/:id", async (req, res) => {
+app.put("/post", async (req: Request, res: Response) => {
+  try {
+    const post: Post = req.body.post
+    const updatedPost: Post = await updatePost(post)
+
+    res.status(httpStatusCode.OK).json(updatedPost)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.get("/post/:id", async (req, res) => {
   try {
     const { id } = req.params
     const postId = parseInt(id)

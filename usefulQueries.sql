@@ -6,6 +6,8 @@ select * from artists;
 
 select * from artist_music_genres;
 
+select * from posts;
+
 SELECT 
   a.name AS artist_name, 
   mg.name AS genre_name
