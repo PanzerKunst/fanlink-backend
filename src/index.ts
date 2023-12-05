@@ -11,13 +11,14 @@ import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds } fro
 import { insertUser, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists } from "./DB/Queries/UserFavouriteArtists"
-import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewUser, User } from "./Models/DrizzleModels"
+import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewPost, NewUser, Post, User } from "./Models/DrizzleModels"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
 import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
 import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
 import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
+import { insertPost, selectPostOfId } from "./DB/Queries/Posts"
 
 const app = express()
 const port = config.PORT
@@ -257,11 +258,6 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
   }
 })
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}/, config.IS_PROD: ${config.IS_PROD}`)
-  migrateDb()
-})
-
 
 // Music genres
 
@@ -274,4 +270,51 @@ app.get("/musicGenres", async (_req: Request, res: Response) => {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
   }
+})
+
+
+// Posts
+
+app.post("/post", async (req: Request, res: Response) => {
+  try {
+    const newPost: NewPost = req.body.post
+    const insertedPost: Post = await insertPost(newPost)
+
+    res.status(httpStatusCode.OK).json(insertedPost)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.get("/posts/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    const postId = parseInt(id)
+
+    if (isNaN(postId)) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
+      return
+    }
+
+    const alreadyStored: Post | undefined = await selectPostOfId(postId)
+
+    if (!alreadyStored) {
+      res.sendStatus(httpStatusCode.NO_CONTENT)
+      return
+    }
+
+    res.status(httpStatusCode.OK).json(alreadyStored)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+
+// Start server
+
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}/, config.IS_PROD: ${config.IS_PROD}`)
+  migrateDb()
 })

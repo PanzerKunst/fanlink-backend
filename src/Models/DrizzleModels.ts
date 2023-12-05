@@ -1,5 +1,16 @@
-// @ts-ignore TS6059: File C:/Pro/fanlink-backend/drizzle/schema.ts is not under rootDir C:/Pro/fanlink-backend/src. rootDir is expected to contain all source files.
-import { artistMusicGenres, artists, countries, locations, musicGenres, userFavouriteArtists, userLocations, users } from "../../drizzle/schema"
+import {
+  artistMusicGenres,
+  artists,
+  countries,
+  locations,
+  musicGenres,
+  posts,
+  userFavouriteArtists,
+  userLocations,
+  userRepresentingArtists,
+  users
+// @ts-ignore TS6059: File C:/Pro/fanlink-backend/drizzle/schema.ts is not under rootDir C:/Pro/fanlink-backend/src.
+} from "../../drizzle/schema"
 
 export type MusicGenre = typeof musicGenres.$inferSelect; // return type when queried
 export type NewMusicGenre = typeof musicGenres.$inferInsert; // insert type
@@ -24,3 +35,9 @@ export type NewUserLocation = typeof userLocations.$inferInsert;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+export type Post = typeof posts.$inferSelect;
+export type NewPost = typeof posts.$inferInsert;
+
+export type UserRepresentingArtist = typeof userRepresentingArtists.$inferSelect;
+export type NewUserRepresentingArtist = typeof userRepresentingArtists.$inferInsert;

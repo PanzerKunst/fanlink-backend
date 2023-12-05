@@ -9,6 +9,8 @@ import { migrateTableCountries } from "./Tables/Countries"
 import { migrateTableUserLocations } from "./Tables/UserLocations"
 import { migrateTableMusicGenres } from "./Tables/MusicGenres"
 import { migrateTableArtistMusicGenres } from "./Tables/ArtistMusicGenres"
+import { migrateTablePosts } from "./Tables/Posts"
+import { migrateTableUserRepresentingArtists } from "./Tables/UserRepresentingArtists"
 
 const connectionOptions = config.IS_PROD ? {
   debug: true,
@@ -29,6 +31,8 @@ export async function migrateDb(): Promise<void> {
   await migrateTableCountries()
   await migrateTableLocations()
   await migrateTableUserLocations()
+  await migrateTableUserRepresentingArtists()
+  await migrateTablePosts()
 
   console.log("Database migrated")
 }
