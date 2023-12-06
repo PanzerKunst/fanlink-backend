@@ -19,9 +19,9 @@ import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } fro
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 import { insertPost, selectPostOfId, updatePost } from "./DB/Queries/Posts"
-import { deletePostArtistTags, insertPostArtistTags } from "./DB/Queries/PostArtistTags"
-import { deletePostGenreTags, insertPostGenreTags } from "./DB/Queries/PostGenreTags"
-import { EmptyPostWithTags } from "./Models/Backend/PostWithTags"
+import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
+import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
+import { EmptyPostWithTags, PostWithTags } from "./Models/Backend/PostWithTags"
 
 const app = express()
 const port = config.PORT
@@ -284,6 +284,8 @@ app.post("/post", async (req: Request, res: Response) => {
     const newPost: NewPost = req.body.post
     const insertedPost = await insertPost(newPost)
 
+    // TODO: validate that max 4 tags
+
     const taggedArtists: Artist[] = req.body.taggedArtists
     await insertPostArtistTags(insertedPost, taggedArtists)
 
@@ -307,6 +309,8 @@ app.put("/post", async (req: Request, res: Response) => {
   try {
     const post: Post = req.body.post
     const updatedPost = await updatePost(post)
+
+    // TODO: validate that max 4 tags
 
     await deletePostArtistTags(updatedPost)
     const taggedArtists: Artist[] = req.body.taggedArtists
@@ -341,14 +345,23 @@ app.get("/post/:id", async (req, res) => {
       return
     }
 
-    const alreadyStored: Post | undefined = await selectPostOfId(postId)
+    const storedPost: Post | undefined = await selectPostOfId(postId)
 
-    if (!alreadyStored) {
+    if (!storedPost) {
       res.sendStatus(httpStatusCode.NO_CONTENT)
       return
     }
 
-    res.status(httpStatusCode.OK).json(alreadyStored)
+    const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
+    const taggedGenres: MusicGenre[] = await selectGenresTaggedInPost(postId)
+
+    const postWithTags: PostWithTags = {
+      post: storedPost,
+      taggedArtists,
+      taggedGenres
+    }
+
+    res.status(httpStatusCode.OK).json(postWithTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)

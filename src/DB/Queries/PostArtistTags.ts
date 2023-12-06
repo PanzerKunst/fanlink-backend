@@ -4,6 +4,7 @@ import { postArtistTags } from "../../../drizzle/schema"
 import { Artist, NewPostArtistTag, PostArtistTag } from "../../Models/DrizzleModels"
 import { EmptyPost } from "../../Models/Backend/Post"
 import { eq } from "drizzle-orm"
+import { selectArtistsOfIds } from "./Artists"
 
 export async function insertPostArtistTags(emptyPost: EmptyPost, taggedArtists: Artist[]): Promise<PostArtistTag[]> {
   if (_isEmpty(taggedArtists)) {
@@ -26,4 +27,11 @@ export async function deletePostArtistTags(emptyPost: EmptyPost): Promise<PostAr
     .where(eq(postArtistTags.postId, emptyPost.id))
 
   return query.returning()
+}
+
+export async function selectArtistsTaggedInPost(postId: number): Promise<Artist[]> {
+  const artistTags: PostArtistTag[] = await db.select().from(postArtistTags)
+    .where(eq(postArtistTags.postId, postId))
+
+  return await selectArtistsOfIds(artistTags.map((postArtistTag: PostArtistTag) => postArtistTag.artistId))
 }

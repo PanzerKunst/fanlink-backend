@@ -52,6 +52,8 @@ delete from artists;
 
 delete from users;
 
+delete from posts;
+
 insert into users(spotify_id, name, username, email)
 values('foo', 'Christophe Bram', 'panzerkunst', 'cbramdit@gmail.com');
 

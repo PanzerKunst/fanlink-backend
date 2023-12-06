@@ -21,6 +21,15 @@ export async function insertArtists(spotifyArtists: SpotifyArtist[]): Promise<Ar
   return query.returning()
 }
 
+export async function selectArtistsOfIds(ids: number[]): Promise<Artist[]> {
+  if (_isEmpty(ids)) {
+    return []
+  }
+
+  return db.select().from(artists)
+    .where(inArray(artists.id, ids))
+}
+
 export async function selectArtistOfSpotifyId(spotifyId: string): Promise<Artist | undefined> {
   const rows = await db.select().from(artists)
     .where(eq(artists.spotifyId, spotifyId))
@@ -30,6 +39,10 @@ export async function selectArtistOfSpotifyId(spotifyId: string): Promise<Artist
 }
 
 export async function selectArtistsOfSpotifyIds(spotifyArtistIds: string[]): Promise<Artist[]> {
+  if (_isEmpty(spotifyArtistIds)) {
+    return []
+  }
+
   return db.select().from(artists)
     .where(inArray(artists.spotifyId, spotifyArtistIds))
 }
