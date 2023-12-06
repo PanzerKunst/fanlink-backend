@@ -14,6 +14,7 @@ async function createTableUserLocations() {
     user_id integer NOT NULL,
     location_id integer NOT NULL,
     PRIMARY KEY (id),
+    UNIQUE(user_id, location_id),
     FOREIGN KEY (user_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -23,7 +24,6 @@ async function createTableUserLocations() {
         REFERENCES public.locations (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE CASCADE
-        NOT VALID,
-    UNIQUE(user_id, location_id)
+        NOT VALID
   )`
 }

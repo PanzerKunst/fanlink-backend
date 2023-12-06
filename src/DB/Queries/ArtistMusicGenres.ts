@@ -6,10 +6,7 @@ import { Artist, ArtistMusicGenre, MusicGenre, NewArtistMusicGenre } from "../..
 import { selectMusicGenresOfIds } from "./MusicGenres"
 import { ArtistWithGenres } from "../../Models/Backend/ArtistWithGenres"
 
-export async function insertArtistMusicGenres(
-  artist: Artist,
-  genres: MusicGenre[]
-): Promise<ArtistMusicGenre[]> {
+export async function insertArtistMusicGenres(artist: Artist, genres: MusicGenre[]): Promise<ArtistMusicGenre[]> {
   if (_isEmpty(genres)) {
     return []
   }

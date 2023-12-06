@@ -14,6 +14,7 @@ async function createTableArtistMusicGenres() {
     artist_id integer NOT NULL,
     genre_id integer NOT NULL,
     PRIMARY KEY (id),
+    UNIQUE (artist_id, genre_id),
     FOREIGN KEY (artist_id)
       REFERENCES public.artists (id) MATCH SIMPLE
       ON UPDATE NO ACTION
@@ -23,7 +24,6 @@ async function createTableArtistMusicGenres() {
       REFERENCES public.music_genres (id) MATCH SIMPLE
       ON UPDATE NO ACTION
       ON DELETE CASCADE
-      NOT VALID,
-    UNIQUE(artist_id, genre_id)
+      NOT VALID
   )`
 }

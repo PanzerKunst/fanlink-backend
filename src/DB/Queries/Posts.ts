@@ -2,12 +2,21 @@ import { NewPost, Post } from "../../Models/DrizzleModels"
 import { db } from "../DB"
 import { posts } from "../../../drizzle/schema"
 import { eq, sql } from "drizzle-orm"
+import { EmptyPost } from "../../Models/Backend/Post"
 
-export async function insertPost(newPost: NewPost): Promise<Post> {
+export async function insertPost(newPost: NewPost): Promise<EmptyPost> {
   const query = db.insert(posts).values(newPost)
     .onConflictDoNothing()
 
-  const rows = await query.returning()
+  const rows = await query.returning({
+    id: posts.id,
+    createdAt: posts.createdAt,
+    updatedAt: posts.updatedAt,
+    publishedAt: posts.publishedAt,
+    userId: posts.userId,
+    title: posts.title
+  })
+
   const row = rows.at(0)
 
   if (!row) {
@@ -17,7 +26,7 @@ export async function insertPost(newPost: NewPost): Promise<Post> {
   return row
 }
 
-export async function updatePost(post: Post): Promise<Post> {
+export async function updatePost(post: Post): Promise<EmptyPost> {
   const query = db.update(posts)
     .set({
       updatedAt: sql`CURRENT_TIMESTAMP`,
@@ -26,7 +35,15 @@ export async function updatePost(post: Post): Promise<Post> {
     })
     .where(eq(posts.id, post.id))
 
-  const rows = await query.returning()
+  const rows = await query.returning({
+    id: posts.id,
+    createdAt: posts.createdAt,
+    updatedAt: posts.updatedAt,
+    publishedAt: posts.publishedAt,
+    userId: posts.userId,
+    title: posts.title
+  })
+
   const row = rows.at(0)
 
   if (!row) {

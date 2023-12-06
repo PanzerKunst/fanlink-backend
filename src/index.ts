@@ -19,6 +19,9 @@ import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } fro
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 import { insertPost, selectPostOfId, updatePost } from "./DB/Queries/Posts"
+import { deletePostArtistTags, insertPostArtistTags } from "./DB/Queries/PostArtistTags"
+import { deletePostGenreTags, insertPostGenreTags } from "./DB/Queries/PostGenreTags"
+import { EmptyPostWithTags } from "./Models/Backend/PostWithTags"
 
 const app = express()
 const port = config.PORT
@@ -279,9 +282,21 @@ app.get("/musicGenres", async (_req: Request, res: Response) => {
 app.post("/post", async (req: Request, res: Response) => {
   try {
     const newPost: NewPost = req.body.post
-    const insertedPost: Post = await insertPost(newPost)
+    const insertedPost = await insertPost(newPost)
 
-    res.status(httpStatusCode.OK).json(insertedPost)
+    const taggedArtists: Artist[] = req.body.taggedArtists
+    await insertPostArtistTags(insertedPost, taggedArtists)
+
+    const taggedGenres: MusicGenre[] = req.body.taggedGenres
+    await insertPostGenreTags(insertedPost, taggedGenres)
+
+    const emptyPostWithTags: EmptyPostWithTags = {
+      post: insertedPost,
+      taggedArtists,
+      taggedGenres
+    }
+
+    res.status(httpStatusCode.OK).json(emptyPostWithTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -291,9 +306,25 @@ app.post("/post", async (req: Request, res: Response) => {
 app.put("/post", async (req: Request, res: Response) => {
   try {
     const post: Post = req.body.post
-    const updatedPost: Post = await updatePost(post)
+    const updatedPost = await updatePost(post)
 
-    res.status(httpStatusCode.OK).json(updatedPost)
+    await deletePostArtistTags(updatedPost)
+    const taggedArtists: Artist[] = req.body.taggedArtists
+    await insertPostArtistTags(updatedPost, taggedArtists)
+
+    await deletePostGenreTags(updatedPost)
+    const taggedGenres: Artist[] = req.body.taggedGenres
+    await insertPostGenreTags(updatedPost, taggedGenres)
+
+    // TODO: if publishing, start following all tagged artists and genres
+
+    const emptyPostWithTags: EmptyPostWithTags = {
+      post: updatedPost,
+      taggedArtists,
+      taggedGenres
+    }
+
+    res.status(httpStatusCode.OK).json(emptyPostWithTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)

@@ -16,6 +16,7 @@ async function createTableUserFavouriteArtists() {
     artist_id integer NOT NULL,
     is_following boolean NOT NULL,
     PRIMARY KEY (id),
+    UNIQUE (user_id, artist_id),
     FOREIGN KEY (user_id)
       REFERENCES public.users (id) MATCH SIMPLE
       ON UPDATE NO ACTION
@@ -25,8 +26,7 @@ async function createTableUserFavouriteArtists() {
       REFERENCES public.artists (id) MATCH SIMPLE
       ON UPDATE NO ACTION
       ON DELETE CASCADE
-      NOT VALID,
-    UNIQUE(user_id, artist_id)
+      NOT VALID
   )`
 }
 
