@@ -150,7 +150,7 @@ export const posts = pgTable("posts", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
-	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	userId: integer("user_id").references(() => users.id, { onDelete: "set null" } ),
 	title: varchar("title", { length: 255 }).notNull(),
 	content: text("content").notNull(),
 });
