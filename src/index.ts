@@ -214,26 +214,12 @@ app.post("/artists", async (req: Request, res: Response) => {
         continue // Skip this iteration
       }
 
-      // TODO: remvoe
-      console.log("genreNamesForArtist", genreNamesForArtist, artist.name)
-
       const genresForArtist: MusicGenre[] = await selectMusicGenresOfNames(genreNamesForArtist)
-
-      // TODO: remvoe
-      console.log("genresForArtist", genresForArtist)
-
       await insertArtistMusicGenres(artist, genresForArtist)
     }
 
     const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
-
-    // TODO: remvoe
-    console.log("const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))")
-
     const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)
-
-    // TODO: remvoe
-    console.log("const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)", artistAndTheirGenres)
 
     res.status(httpStatusCode.OK).json(artistAndTheirGenres)
   } catch (error) {
@@ -284,12 +270,15 @@ app.post("/post", async (req: Request, res: Response) => {
     const newPost: NewPost = req.body.post
     const insertedPost = await insertPost(newPost)
 
-    // TODO: validate that max 4 tags
-
     const taggedArtists: Artist[] = req.body.taggedArtists
-    await insertPostArtistTags(insertedPost, taggedArtists)
-
     const taggedGenres: MusicGenre[] = req.body.taggedGenres
+
+    if (taggedArtists.length > 2 || taggedGenres.length > 2) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Too many tags")
+      return
+    }
+
+    await insertPostArtistTags(insertedPost, taggedArtists)
     await insertPostGenreTags(insertedPost, taggedGenres)
 
     const emptyPostWithTags: EmptyPostWithTags = {
@@ -310,14 +299,18 @@ app.put("/post", async (req: Request, res: Response) => {
     const post: Post = req.body.post
     const updatedPost = await updatePost(post)
 
-    // TODO: validate that max 4 tags
+    const taggedArtists: Artist[] = req.body.taggedArtists
+    const taggedGenres: Artist[] = req.body.taggedGenres
+
+    if (taggedArtists.length > 2 || taggedGenres.length > 2) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Too many tags")
+      return
+    }
 
     await deletePostArtistTags(updatedPost)
-    const taggedArtists: Artist[] = req.body.taggedArtists
     await insertPostArtistTags(updatedPost, taggedArtists)
 
     await deletePostGenreTags(updatedPost)
-    const taggedGenres: Artist[] = req.body.taggedGenres
     await insertPostGenreTags(updatedPost, taggedGenres)
 
     // TODO: if publishing, start following all tagged artists and genres
