@@ -12,14 +12,14 @@ async function createTablePosts() {
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     published_at timestamp with time zone,
-    user_id integer NOT NULL,
+    user_id integer,
     title character varying(255) NOT NULL,
     content text NOT NULL,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION
-        ON DELETE CASCADE
+        ON DELETE SET NULL
         NOT VALID
   )`
 }
