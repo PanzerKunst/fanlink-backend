@@ -1,6 +1,8 @@
 import * as dotenv from "dotenv"
+
 dotenv.config()
 
+import { exec } from "node:child_process"
 import express, { Request, Response } from "express"
 import cors from "cors"
 import _isEmpty from "lodash/isEmpty"
@@ -355,6 +357,24 @@ app.get("/post/:id", async (req, res) => {
     }
 
     res.status(httpStatusCode.OK).json(postWithTags)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+
+// Github webhook
+
+app.post("/webhook", (req, res) => {
+  try {
+    exec("/home/panzerkunst/fanlink-backend-test/deploy.sh", (err) => {
+      if (err) {
+        throw new Error("The Github webkook failed")
+      }
+
+      res.status(200).send("Deployed!")
+    })
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
