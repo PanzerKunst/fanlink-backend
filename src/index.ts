@@ -368,7 +368,7 @@ app.get("/post/:id", async (req, res) => {
 
 app.post("/webhook", (req, res) => {
   try {
-    exec("/home/panzerkunst/fanlink-backend-test/deploy.sh", (err) => {
+    exec("/home/panzerkunst/fanlink-backend-test/deploy-test.sh", (err) => {
       if (err) {
         throw new Error("The Github webkook failed")
       }
