@@ -112,7 +112,7 @@ app.get("/user/username/:username", async (req, res) => {
 
 app.post("/user", async (req: Request, res: Response) => {
   try {
-    const newUser: NewUser = req.body.user
+    const newUser: NewUser = req.body.user as NewUser // eslint-disable-line @typescript-eslint/no-unsafe-member-access
     const alreadyStoredUser: User | undefined = await selectUserOfSpotifyId(newUser.spotifyId)
 
     if (alreadyStoredUser) {
@@ -122,7 +122,7 @@ app.post("/user", async (req: Request, res: Response) => {
 
     const insertedUser: User = await insertUser(newUser)
 
-    const geoapifyFeature: GeoapifyFeature = req.body.geoapifyFeature
+    const geoapifyFeature: GeoapifyFeature = req.body.geoapifyFeature as GeoapifyFeature // eslint-disable-line @typescript-eslint/no-unsafe-member-access
     const alreadyStoredLocation: Location | undefined = await selectLocationOfGeoapifyPlaceId(geoapifyFeature.place_id)
 
     if (!alreadyStoredLocation) {
@@ -193,7 +193,7 @@ app.post("/user", async (req: Request, res: Response) => {
 
 app.post("/artists", async (req: Request, res: Response) => {
   try {
-    const spotifyArtists: SpotifyArtist[] = req.body.spotifyArtists
+    const spotifyArtists: SpotifyArtist[] = req.body.spotifyArtists as SpotifyArtist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
     if (_isEmpty(spotifyArtists)) {
       res.status(httpStatusCode.OK).json([])
@@ -230,15 +230,15 @@ app.post("/artists", async (req: Request, res: Response) => {
 
 app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
   try {
-    const userFavourites: Artist[] = req.body.favouriteArtists
+    const userFavourites: Artist[] = req.body.favouriteArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
     if (_isEmpty(userFavourites)) {
       res.status(httpStatusCode.OK).json([])
       return
     }
 
-    const user: User = req.body.user
-    const followedArtists: SpotifyArtist[] = req.body.followedArtists
+    const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    const followedArtists: SpotifyArtist[] = req.body.followedArtists as SpotifyArtist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
     await insertUserFavouriteArtists(user, userFavourites, followedArtists)
 
     res.status(httpStatusCode.OK).json(userFavourites)
@@ -267,11 +267,11 @@ app.get("/musicGenres", async (_req: Request, res: Response) => {
 
 app.post("/post", async (req: Request, res: Response) => {
   try {
-    const newPost: NewPost = req.body.post
+    const newPost: NewPost = req.body.post as NewPost // eslint-disable-line @typescript-eslint/no-unsafe-member-access
     const insertedPost = await insertPost(newPost)
 
-    const taggedArtists: Artist[] = req.body.taggedArtists
-    const taggedGenres: MusicGenre[] = req.body.taggedGenres
+    const taggedArtists: Artist[] = req.body.taggedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    const taggedGenres: MusicGenre[] = req.body.taggedGenres as MusicGenre[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
     if (taggedArtists.length > 2 || taggedGenres.length > 2) {
       res.status(httpStatusCode.BAD_REQUEST).send("Too many tags")
@@ -296,11 +296,11 @@ app.post("/post", async (req: Request, res: Response) => {
 
 app.put("/post", async (req: Request, res: Response) => {
   try {
-    const post: Post = req.body.post
+    const post: Post = req.body.post as Post // eslint-disable-line @typescript-eslint/no-unsafe-member-access
     const updatedPost = await updatePost(post)
 
-    const taggedArtists: Artist[] = req.body.taggedArtists
-    const taggedGenres: Artist[] = req.body.taggedGenres
+    const taggedArtists: Artist[] = req.body.taggedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    const taggedGenres: Artist[] = req.body.taggedGenres as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
     if (taggedArtists.length > 2 || taggedGenres.length > 2) {
       res.status(httpStatusCode.BAD_REQUEST).send("Too many tags")
@@ -364,7 +364,7 @@ app.get("/post/:id", async (req, res) => {
 
 // Start server
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server running on http://localhost:${port}/, config.IS_PROD: ${config.IS_PROD}`)
-  migrateDb()
+  await migrateDb()
 })
