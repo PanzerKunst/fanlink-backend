@@ -371,7 +371,7 @@ app.get("/post/:id", async (req, res) => {
 app.post("/webhook", (req, res) => {
   try {
     // TODO: remove
-    console.log("Received webhook")
+    console.log(" Received webhook")
 
     exec("/home/panzerkunst/fanlink-backend-test/deploy-test.sh", (err) => {
       if (err) {
