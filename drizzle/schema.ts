@@ -21,19 +21,6 @@ export const users = pgTable("users", {
 	}
 });
 
-export const artistMusicGenres = pgTable("artist_music_genres", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
-	genreId: integer("genre_id").notNull().references(() => musicGenres.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		artistMusicGenresArtistIdGenreIdKey: unique("artist_music_genres_artist_id_genre_id_key").on(table.artistId, table.genreId),
-	}
-});
-
 export const countries = pgTable("countries", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -80,31 +67,6 @@ export const locations = pgTable("locations", {
 	}
 });
 
-export const musicGenres = pgTable("music_genres", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	name: varchar("name", { length: 255 }).notNull(),
-},
-(table) => {
-	return {
-		musicGenresNameKey: unique("music_genres_name_key").on(table.name),
-	}
-});
-
-export const enhancedUserFavouriteArtists = pgTable("enhanced_user_favourite_artists", {
-	id: integer("id"),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
-	userId: integer("user_id"),
-	artistId: integer("artist_id"),
-	isFollowing: boolean("is_following"),
-	spotifyArtistId: varchar("spotify_artist_id", { length: 255 }),
-	artistName: varchar("artist_name", { length: 255 }),
-	spotifyUserId: varchar("spotify_user_id", { length: 255 }),
-	userName: varchar("user_name", { length: 255 }),
-});
-
 export const artists = pgTable("artists", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -115,6 +77,31 @@ export const artists = pgTable("artists", {
 (table) => {
 	return {
 		artistsSpotifyIdKey: unique("artists_spotify_id_key").on(table.spotifyId),
+	}
+});
+
+export const artistMusicGenres = pgTable("artist_music_genres", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
+	genreId: integer("genre_id").notNull().references(() => musicGenres.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		artistMusicGenresArtistIdGenreIdKey: unique("artist_music_genres_artist_id_genre_id_key").on(table.artistId, table.genreId),
+	}
+});
+
+export const musicGenres = pgTable("music_genres", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	name: varchar("name", { length: 255 }).notNull(),
+},
+(table) => {
+	return {
+		musicGenresNameKey: unique("music_genres_name_key").on(table.name),
 	}
 });
 
@@ -132,6 +119,19 @@ export const userFavouriteArtists = pgTable("user_favourite_artists", {
 	}
 });
 
+export const enhancedUserFavouriteArtists = pgTable("enhanced_user_favourite_artists", {
+	id: integer("id"),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
+	userId: integer("user_id"),
+	artistId: integer("artist_id"),
+	isFollowing: boolean("is_following"),
+	spotifyArtistId: varchar("spotify_artist_id", { length: 255 }),
+	artistName: varchar("artist_name", { length: 255 }),
+	spotifyUserId: varchar("spotify_user_id", { length: 255 }),
+	userName: varchar("user_name", { length: 255 }),
+});
+
 export const userLocations = pgTable("user_locations", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -145,16 +145,6 @@ export const userLocations = pgTable("user_locations", {
 	}
 });
 
-export const posts = pgTable("posts", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
-	userId: integer("user_id").references(() => users.id, { onDelete: "set null" } ),
-	title: varchar("title", { length: 255 }).notNull(),
-	content: text("content").notNull(),
-});
-
 export const postArtistTags = pgTable("post_artist_tags", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -166,6 +156,16 @@ export const postArtistTags = pgTable("post_artist_tags", {
 	return {
 		postArtistTagsPostIdArtistIdKey: unique("post_artist_tags_post_id_artist_id_key").on(table.postId, table.artistId),
 	}
+});
+
+export const posts = pgTable("posts", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
+	userId: integer("user_id").references(() => users.id, { onDelete: "set null" } ),
+	title: varchar("title", { length: 255 }),
+	content: text("content").notNull(),
 });
 
 export const postGenreTags = pgTable("post_genre_tags", {
