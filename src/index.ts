@@ -332,6 +332,43 @@ app.put("/post", async (req: Request, res: Response) => {
   }
 })
 
+app.put("/post/publish/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params
+    const postId = parseInt(id || "")
+
+    if (isNaN(postId)) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
+      return
+    }
+
+    const storedPost: Post | undefined = await selectPostOfId(postId)
+
+    if (!storedPost) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
+      return
+    }
+
+    const publishedAt = new Date().toISOString()
+
+    await updatePost({ ...storedPost, publishedAt })
+
+    const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
+    const taggedGenres: MusicGenre[] = await selectGenresTaggedInPost(postId)
+
+    const postWithTags: PostWithTags = {
+      post: { ...storedPost, publishedAt },
+      taggedArtists,
+      taggedGenres
+    }
+
+    res.status(httpStatusCode.OK).json(postWithTags)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
 app.get("/post/:id", async (req, res) => {
   try {
     const { id } = req.params
