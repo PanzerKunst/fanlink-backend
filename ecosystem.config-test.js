@@ -6,8 +6,8 @@ module.exports = {
     env: {
       NODE_ENV: "production"
     },
-    out_file: "/home/panzerkunst/fanlink-backend-test/log/out.log",
-    error_file: "/home/panzerkunst/fanlink-backend-test/log/error.log",
+    out_file: "/home/panzerkunst/fanlink-backend-test/logs/out.log",
+    error_file: "/home/panzerkunst/fanlink-backend-test/logs/error.log",
     merge_logs: true,
     time: true
   }]
