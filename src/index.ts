@@ -40,6 +40,9 @@ const corsOptions: cors.CorsOptions = {
     if (!origin) return callback(null, true)
 
     if (config.FRONTEND_URL !== origin) {
+      // TODO: remove
+      console.log("Refused origin: " + origin)
+
       const msg = "The CORS policy for this site does not allow access from the specified Origin."
       return callback(new Error(msg), false)
     }
