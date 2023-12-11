@@ -3,6 +3,7 @@ module.exports = {
     name: "BackstagePassBackendTest",
     script: "npm",
     args: "run start",
+    time: true,
     env: {
       NODE_ENV: "production"
     },
