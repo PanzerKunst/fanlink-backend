@@ -33,6 +33,9 @@ app.use(express.json({ limit: payloadLimit }))
 app.use(express.raw({ type: "text/plain", limit: payloadLimit }))
 app.use(express.urlencoded({ limit: payloadLimit, extended: true }))
 
+// TODO: remove
+console.log("Environment variables :", config)
+
 // Configure CORS middleware options
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
