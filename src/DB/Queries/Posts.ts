@@ -3,9 +3,15 @@ import { db } from "../DB"
 import { posts } from "../../../drizzle/schema"
 import { eq, sql } from "drizzle-orm"
 import { EmptyPost } from "../../Models/Backend/Post"
+import _isEmpty from "lodash/isEmpty"
 
 export async function insertPost(newPost: NewPost): Promise<EmptyPost> {
-  const query = db.insert(posts).values(newPost)
+  const newPostForDb: NewPost = {
+    ...newPost,
+    title: !_isEmpty(newPost.title) ? newPost.title : null // Replacing "" by null
+  }
+
+  const query = db.insert(posts).values(newPostForDb)
     .onConflictDoNothing()
 
   const rows = await query.returning({
@@ -31,6 +37,7 @@ export async function updatePost(post: Post): Promise<EmptyPost> {
     .set({
       updatedAt: sql`CURRENT_TIMESTAMP`,
       publishedAt: post.publishedAt,
+      title: !_isEmpty(post.title) ? post.title : null, // Replacing "" by null
       content: post.content
     })
     .where(eq(posts.id, post.id))
