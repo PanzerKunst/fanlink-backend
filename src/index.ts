@@ -373,7 +373,7 @@ app.post("/webhook", (req, res) => {
         throw new Error("The Github webkook failed")
       }
 
-      console.log("Deployed!")
+      console.log("### Deployed!")
       res.status(200).send("Deployed!")
     })
   } catch (error) {
