@@ -9,7 +9,7 @@ import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
 import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds } from "./DB/Queries/Artists"
-import { insertUser, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
+import { insertUser, selectUserOfId, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists } from "./DB/Queries/UserFavouriteArtists"
 import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewPost, NewUser, Post, User } from "./Models/DrizzleModels"
@@ -22,7 +22,7 @@ import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 import { insertPost, selectPostOfId, selectPostsOfUser, updatePost } from "./DB/Queries/Posts"
 import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
 import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
-import { EmptyPostWithTags, PostWithTags } from "./Models/Backend/PostWithTags"
+import { EmptyPostWithTags, PostWithAuthorAndTags } from "./Models/Backend/PostWithTags"
 
 const app = express()
 const port = config.PORT
@@ -362,16 +362,18 @@ app.put("/post/:id", async (req: Request, res: Response) => {
     const publishedAt = isPublishing ? new Date().toISOString() : null
     await updatePost({ ...storedPost, publishedAt })
 
+    const author: User | undefined = await selectUserOfId(storedPost.userId!)
     const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
     const taggedGenres: MusicGenre[] = await selectGenresTaggedInPost(postId)
 
-    const postWithTags: PostWithTags = {
+    const postWithAuthorAndTags: PostWithAuthorAndTags = {
       post: { ...storedPost, publishedAt },
+      author: author!,
       taggedArtists,
       taggedGenres
     }
 
-    res.status(httpStatusCode.OK).json(postWithTags)
+    res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -397,16 +399,18 @@ app.get("/post/:id", async (req, res) => {
       return
     }
 
+    const author: User | undefined = await selectUserOfId(storedPost.userId!)
     const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
     const taggedGenres: MusicGenre[] = await selectGenresTaggedInPost(postId)
 
-    const postWithTags: PostWithTags = {
+    const postWithAuthorAndTags: PostWithAuthorAndTags = {
       post: storedPost,
+      author: author!,
       taggedArtists,
       taggedGenres
     }
 
-    res.status(httpStatusCode.OK).json(postWithTags)
+    res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -423,6 +427,7 @@ app.get("/posts/user/:id", async (req, res) => {
       return
     }
 
+    const user: User = (await selectUserOfId(userId))!
     const usersPosts: Post[] = await selectPostsOfUser(userId)
 
     const usersPostsWithTagsPromises = usersPosts.map(async (post) => {
@@ -433,12 +438,13 @@ app.get("/posts/user/:id", async (req, res) => {
 
       return {
         post,
+        author: user,
         taggedArtists,
         taggedGenres
       }
     })
 
-    const usersPostsWithTags: PostWithTags[] = await Promise.all(usersPostsWithTagsPromises)
+    const usersPostsWithTags: PostWithAuthorAndTags[] = await Promise.all(usersPostsWithTagsPromises)
 
     res.status(httpStatusCode.OK).json(usersPostsWithTags)
   } catch (error) {

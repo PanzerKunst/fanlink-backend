@@ -1,4 +1,4 @@
-import { Artist, MusicGenre, NewPost, Post } from "../DrizzleModels"
+import { Artist, MusicGenre, NewPost, Post, User } from "../DrizzleModels"
 import { EmptyPost } from "./Post"
 
 export type NewPostWithTags = {
@@ -7,8 +7,9 @@ export type NewPostWithTags = {
   taggedGenres: MusicGenre[];
 }
 
-export type PostWithTags = {
+export type PostWithAuthorAndTags = {
   post: Post;
+  author: User;
   taggedArtists: Artist[];
   taggedGenres: MusicGenre[];
 }

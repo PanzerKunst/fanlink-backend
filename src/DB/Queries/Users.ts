@@ -17,6 +17,14 @@ export async function insertUser(newUser: NewUser): Promise<User> {
   return row
 }
 
+export async function selectUserOfId(id: number): Promise<User | undefined> {
+  const rows = await db.select().from(users)
+    .where(eq(users.id, id))
+    .limit(1)
+
+  return rows.at(0)
+}
+
 export async function selectUserOfSpotifyId(spotifyId: string): Promise<User | undefined> {
   const rows = await db.select().from(users)
     .where(eq(users.spotifyId, spotifyId))
