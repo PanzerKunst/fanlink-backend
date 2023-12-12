@@ -1,7 +1,7 @@
 import { NewPost, Post } from "../../Models/DrizzleModels"
 import { db } from "../DB"
 import { posts } from "../../../drizzle/schema"
-import { eq, sql } from "drizzle-orm"
+import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm"
 import { EmptyPost } from "../../Models/Backend/Post"
 import _isEmpty from "lodash/isEmpty"
 
@@ -60,10 +60,19 @@ export async function updatePost(post: Post): Promise<EmptyPost> {
   return row
 }
 
-export async function selectPostOfId(id: number): Promise<Post | undefined> {
+export async function selectPostOfId(id: number, isPublished: boolean): Promise<Post | undefined> {
   const rows = await db.select().from(posts)
-    .where(eq(posts.id, id))
+    .where(and(
+      eq(posts.id, id),
+      isPublished ? isNotNull(posts.publishedAt) : isNull(posts.publishedAt)
+    ))
     .limit(1)
 
   return rows.at(0)
+}
+
+export async function selectPostsOfUser(userId: number): Promise<Post[]> {
+  return await db.select().from(posts)
+    .where(eq(posts.userId, userId))
+    .orderBy(desc(posts.id))
 }

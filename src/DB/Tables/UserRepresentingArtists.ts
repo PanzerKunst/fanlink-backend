@@ -14,7 +14,7 @@ async function createTableUserRepresentingArtists() {
     user_id integer NOT NULL,
     artist_id integer NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE(user_id, artist_id),
+    UNIQUE (user_id, artist_id),
     FOREIGN KEY (user_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION

@@ -19,7 +19,7 @@ import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
 import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
-import { insertPost, selectPostOfId, updatePost } from "./DB/Queries/Posts"
+import { insertPost, selectPostOfId, selectPostsOfUser, updatePost } from "./DB/Queries/Posts"
 import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
 import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
 import { EmptyPostWithTags, PostWithTags } from "./Models/Backend/PostWithTags"
@@ -126,7 +126,8 @@ app.post("/user", async (req: Request, res: Response) => {
 
     const insertedUser: User = await insertUser(newUser)
 
-    const geoapifyFeature: GeoapifyFeature = req.body.geoapifyFeature as GeoapifyFeature // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const geoapifyFeature: GeoapifyFeature = req.body.geoapifyFeature as GeoapifyFeature
     const alreadyStoredLocation: Location | undefined = await selectLocationOfGeoapifyPlaceId(geoapifyFeature.place_id)
 
     if (!alreadyStoredLocation) {
@@ -197,7 +198,8 @@ app.post("/user", async (req: Request, res: Response) => {
 
 app.post("/artists", async (req: Request, res: Response) => {
   try {
-    const spotifyArtists: SpotifyArtist[] = req.body.spotifyArtists as SpotifyArtist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const spotifyArtists: SpotifyArtist[] = req.body.spotifyArtists as SpotifyArtist[]
 
     if (_isEmpty(spotifyArtists)) {
       res.status(httpStatusCode.OK).json([])
@@ -242,7 +244,10 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
     }
 
     const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-    const followedArtists: SpotifyArtist[] = req.body.followedArtists as SpotifyArtist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const followedArtists: SpotifyArtist[] = req.body.followedArtists as SpotifyArtist[]
+
     await insertUserFavouriteArtists(user, userFavourites, followedArtists)
 
     res.status(httpStatusCode.OK).json(userFavourites)
@@ -317,8 +322,6 @@ app.put("/post", async (req: Request, res: Response) => {
     await deletePostGenreTags(updatedPost)
     await insertPostGenreTags(updatedPost, taggedGenres)
 
-    // TODO: if publishing, start following all tagged artists and genres
-
     const emptyPostWithTags: EmptyPostWithTags = {
       post: updatedPost,
       taggedArtists,
@@ -332,7 +335,8 @@ app.put("/post", async (req: Request, res: Response) => {
   }
 })
 
-app.put("/post/publish/:id", async (req: Request, res: Response) => {
+// Publish or unpublish
+app.put("/post/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     const postId = parseInt(id || "")
@@ -342,15 +346,20 @@ app.put("/post/publish/:id", async (req: Request, res: Response) => {
       return
     }
 
-    const storedPost: Post | undefined = await selectPostOfId(postId)
+    const storedPost: Post | undefined = await selectPostOfId(postId, false)
 
     if (!storedPost) {
       res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
       return
     }
 
-    const publishedAt = new Date().toISOString()
+    if (!("publish" in req.query)) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing 'publish' query param")
+      return
+    }
 
+    const isPublishing = req.query.publish === "true"
+    const publishedAt = isPublishing ? new Date().toISOString() : null
     await updatePost({ ...storedPost, publishedAt })
 
     const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
@@ -379,7 +388,9 @@ app.get("/post/:id", async (req, res) => {
       return
     }
 
-    const storedPost: Post | undefined = await selectPostOfId(postId)
+    const isUnpublished = "unpublished" in req.query
+
+    const storedPost: Post | undefined = await selectPostOfId(postId, !isUnpublished)
 
     if (!storedPost) {
       res.sendStatus(httpStatusCode.NO_CONTENT)
@@ -396,6 +407,40 @@ app.get("/post/:id", async (req, res) => {
     }
 
     res.status(httpStatusCode.OK).json(postWithTags)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.get("/posts/user/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    const userId = parseInt(id || "")
+
+    if (isNaN(userId)) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
+      return
+    }
+
+    const usersPosts: Post[] = await selectPostsOfUser(userId)
+
+    const usersPostsWithTagsPromises = usersPosts.map(async (post) => {
+      const [taggedArtists, taggedGenres] = await Promise.all([
+        selectArtistsTaggedInPost(post.id),
+        selectGenresTaggedInPost(post.id)
+      ])
+
+      return {
+        post,
+        taggedArtists,
+        taggedGenres
+      }
+    })
+
+    const usersPostsWithTags: PostWithTags[] = await Promise.all(usersPostsWithTagsPromises)
+
+    res.status(httpStatusCode.OK).json(usersPostsWithTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
