@@ -1,5 +1,5 @@
 import { db } from "../DB"
-import { eq } from "drizzle-orm"
+import { eq, sql } from "drizzle-orm"
 import { users } from "../../../drizzle/schema"
 import { NewUser, User } from "../../Models/DrizzleModels"
 
@@ -39,4 +39,29 @@ export async function selectUserOfUsername(username: string): Promise<User | und
     .limit(1)
 
   return rows.at(0)
+}
+
+export async function updateUser(user: User): Promise<User> {
+  const query = db.update(users)
+    .set({
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+      name: user.name,
+      username: user.username,
+      email: user.email
+    })
+    .where(eq(users.id, user.id))
+
+  const rows = await query.returning()
+  const row = rows.at(0)
+
+  if (!row) {
+    throw new Error("Failed to update user")
+  }
+
+  return row
+}
+
+export async function deleteUser(user: User): Promise<void> {
+  await db.delete(users)
+    .where(eq(users.id, user.id))
 }

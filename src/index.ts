@@ -9,7 +9,7 @@ import { config } from "./config"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { migrateDb } from "./DB/DB"
 import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds } from "./DB/Queries/Artists"
-import { insertUser, selectUserOfId, selectUserOfSpotifyId, selectUserOfUsername } from "./DB/Queries/Users"
+import { deleteUser, insertUser, selectUserOfId, selectUserOfSpotifyId, selectUserOfUsername, updateUser } from "./DB/Queries/Users"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { insertUserFavouriteArtists } from "./DB/Queries/UserFavouriteArtists"
 import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewPost, NewUser, Post, User } from "./Models/DrizzleModels"
@@ -19,10 +19,20 @@ import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
 import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
-import { insertPost, selectPostOfId, selectPostsOfUser, updatePost } from "./DB/Queries/Posts"
+import {
+  deletePost,
+  insertPost,
+  selectEmptyPostOfId,
+  selectPostOfIdAndPublicationStatus,
+  selectPostsOfUser,
+  updatePost,
+  updatePostPublicationStatus
+} from "./DB/Queries/Posts"
 import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
 import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
 import { EmptyPostWithTags, PostWithAuthorAndTags } from "./Models/Backend/PostWithTags"
+import { EmptyPost } from "./Models/Backend/Post"
+import dayjs from "dayjs"
 
 const app = express()
 const port = config.PORT
@@ -162,6 +172,39 @@ app.post("/user", async (req: Request, res: Response) => {
     }
 
     res.status(httpStatusCode.OK).json(insertedUser)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.put("/user", async (req: Request, res: Response) => {
+  try {
+    const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    const updatedUser = await updateUser(user)
+
+    res.status(httpStatusCode.OK).json(updatedUser)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.delete("/user", async (req: Request, res: Response) => {
+  try {
+    const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    const storedUser: User | undefined = await selectUserOfId(user.id)
+
+    if (!storedUser) {
+      res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+      return
+    }
+
+    if (dayjs(storedUser.createdAt).isSame(dayjs(user.createdAt), "millisecond")) {
+      await deleteUser(user)
+    }
+
+    res.sendStatus(httpStatusCode.OK)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -346,9 +389,9 @@ app.put("/post/:id", async (req: Request, res: Response) => {
       return
     }
 
-    const storedPost: Post | undefined = await selectPostOfId(postId, false)
+    const storedEmptyPost: EmptyPost | undefined = await selectEmptyPostOfId(postId)
 
-    if (!storedPost) {
+    if (!storedEmptyPost) {
       res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
       return
     }
@@ -358,22 +401,17 @@ app.put("/post/:id", async (req: Request, res: Response) => {
       return
     }
 
-    const isPublishing = req.query.publish === "true"
-    const publishedAt = isPublishing ? new Date().toISOString() : null
-    await updatePost({ ...storedPost, publishedAt })
-
-    const author: User | undefined = await selectUserOfId(storedPost.userId!)
+    const updatedEmptyPost: EmptyPost = await updatePostPublicationStatus(storedEmptyPost.id, req.query.publish === "true")
     const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
     const taggedGenres: MusicGenre[] = await selectGenresTaggedInPost(postId)
 
-    const postWithAuthorAndTags: PostWithAuthorAndTags = {
-      post: { ...storedPost, publishedAt },
-      author: author!,
+    const emptyPostWithTags: EmptyPostWithTags = {
+      post: updatedEmptyPost,
       taggedArtists,
       taggedGenres
     }
 
-    res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
+    res.status(httpStatusCode.OK).json(emptyPostWithTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -392,7 +430,7 @@ app.get("/post/:id", async (req, res) => {
 
     const isUnpublished = "unpublished" in req.query
 
-    const storedPost: Post | undefined = await selectPostOfId(postId, !isUnpublished)
+    const storedPost: Post | undefined = await selectPostOfIdAndPublicationStatus(postId, !isUnpublished)
 
     if (!storedPost) {
       res.sendStatus(httpStatusCode.NO_CONTENT)
@@ -411,6 +449,27 @@ app.get("/post/:id", async (req, res) => {
     }
 
     res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.delete("/post", async (req, res) => {
+  try {
+    const emptyPost = req.body.emptyPost as EmptyPost // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+    const storedEmptyPost = await selectEmptyPostOfId(emptyPost.id)
+
+    if (!storedEmptyPost) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
+      return
+    }
+
+    if (dayjs(storedEmptyPost.createdAt).isSame(dayjs(emptyPost.createdAt), "millisecond")) {
+      await deletePost(emptyPost)
+    }
+
+    res.sendStatus(httpStatusCode.OK)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
