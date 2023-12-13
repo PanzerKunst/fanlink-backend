@@ -22,8 +22,7 @@ import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 import {
   deletePost,
   insertPost,
-  selectEmptyPostOfId,
-  selectPostOfIdAndPublicationStatus,
+  selectEmptyPostOfId, selectPostOfId,
   selectPostsOfUser,
   updatePost,
   updatePostPublicationStatus
@@ -428,9 +427,7 @@ app.get("/post/:id", async (req, res) => {
       return
     }
 
-    const isUnpublished = "unpublished" in req.query
-
-    const storedPost: Post | undefined = await selectPostOfIdAndPublicationStatus(postId, !isUnpublished)
+    const storedPost: Post | undefined = await selectPostOfId(postId)
 
     if (!storedPost) {
       res.sendStatus(httpStatusCode.NO_CONTENT)

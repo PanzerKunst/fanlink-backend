@@ -1,7 +1,7 @@
 import { NewPost, Post } from "../../Models/DrizzleModels"
 import { db } from "../DB"
 import { posts } from "../../../drizzle/schema"
-import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm"
+import { desc, eq, sql } from "drizzle-orm"
 import { EmptyPost } from "../../Models/Backend/Post"
 import _isEmpty from "lodash/isEmpty"
 
@@ -89,17 +89,6 @@ export async function updatePostPublicationStatus(postId: number, isPublishing: 
 export async function selectPostOfId(id: number): Promise<Post | undefined> {
   const rows = await db.select().from(posts)
     .where(eq(posts.id, id))
-    .limit(1)
-
-  return rows.at(0)
-}
-
-export async function selectPostOfIdAndPublicationStatus(id: number, isPublished: boolean): Promise<Post | undefined> {
-  const rows = await db.select().from(posts)
-    .where(and(
-      eq(posts.id, id),
-      isPublished ? isNotNull(posts.publishedAt) : isNull(posts.publishedAt)
-    ))
     .limit(1)
 
   return rows.at(0)
