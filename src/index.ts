@@ -31,6 +31,9 @@ import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
 import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
 import { httpStatusCode } from "./Util/HttpUtils"
 import { config } from "./config"
+import path from "node:path"
+import * as fs from "fs"
+import { getContentTypeFromFilePath } from "./Util/FileUtils"
 
 const app = express()
 const port = config.PORT
@@ -521,6 +524,65 @@ app.get("/posts/user/:id", async (req, res) => {
     const usersPostsWithTags: PostWithAuthorAndTags[] = await Promise.all(usersPostsWithTagsPromises)
 
     res.status(httpStatusCode.OK).json(usersPostsWithTags)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+
+// File upload / serving
+
+app.post("/file/image", (req: Request, res: Response) => {
+  try {
+    const base64 = req.body.base64 as string // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+    const matches = base64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/)
+
+    if (!matches || matches.length !== 3) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Invalid base64 string")
+      return
+    }
+
+    const todayYyyyMmDd = dayjs().format("YYYY-MM-DD")
+    const directoryPath = path.join(config.UPLOADS_DIR, todayYyyyMmDd)
+    fs.mkdirSync(directoryPath, { recursive: true })
+
+    const contentType = matches[1]!
+    const extension = contentType.split("/")[1]
+    const timestamp = Date.now()
+    const fileName = `image-${timestamp}.${extension}`
+    const absolutePath = path.join(directoryPath, fileName)
+
+    const base64Data = matches[2]!
+    const buffer = Buffer.from(base64Data, "base64")
+    fs.writeFileSync(absolutePath, buffer)
+
+    res.status(httpStatusCode.OK).json(`${todayYyyyMmDd}/${fileName}`)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.get("/file/image/:dir/:fileName", (req, res) => {
+  try {
+    const { dir, fileName } = req.params
+
+    if (dir === "" || fileName === "") {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing 'dir' or 'filePath' in path")
+      return
+    }
+
+    const absolutePath = path.join(config.UPLOADS_DIR, dir, fileName)
+
+    if (!fs.existsSync(absolutePath)) {
+      res.sendStatus(httpStatusCode.NO_CONTENT)
+      return
+    }
+
+    res.setHeader("Content-Type", getContentTypeFromFilePath(absolutePath))
+    fs.createReadStream(absolutePath).pipe(res)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
