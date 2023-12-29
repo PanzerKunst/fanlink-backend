@@ -1,4 +1,4 @@
-import { Artist, MusicGenre, NewPost, Post, User } from "../DrizzleModels"
+import { Artist, NewPost, Post, User } from "../DrizzleModels"
 import { EmptyPost } from "./Post"
 
 export type NewPostWithTags = {

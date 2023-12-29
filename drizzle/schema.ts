@@ -28,24 +28,6 @@ export const musicGenres = pgTable("music_genres", {
 	}
 });
 
-export const users = pgTable("users", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	lastSeenAt: timestamp("last_seen_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	spotifyId: varchar("spotify_id", { length: 255 }).notNull(),
-	name: varchar("name", { length: 255 }).notNull(),
-	username: varchar("username", { length: 255 }).notNull(),
-	email: varchar("email", { length: 255 }).notNull(),
-},
-(table) => {
-	return {
-		usersSpotifyIdKey: unique("users_spotify_id_key").on(table.spotifyId),
-		usersUsernameKey: unique("users_username_key").on(table.username),
-		usersEmailKey: unique("users_email_key").on(table.email),
-	}
-});
-
 export const userFavouriteArtists = pgTable("user_favourite_artists", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -141,16 +123,21 @@ export const userRepresentingArtists = pgTable("user_representing_artists", {
 	}
 });
 
-export const artists = pgTable("artists", {
+export const users = pgTable("users", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	lastSeenAt: timestamp("last_seen_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	spotifyId: varchar("spotify_id", { length: 255 }).notNull(),
 	name: varchar("name", { length: 255 }).notNull(),
+	username: varchar("username", { length: 255 }).notNull(),
+	email: varchar("email", { length: 255 }).notNull(),
 },
 (table) => {
 	return {
-		artistsSpotifyIdKey: unique("artists_spotify_id_key").on(table.spotifyId),
+		usersSpotifyIdKey: unique("users_spotify_id_key").on(table.spotifyId),
+		usersUsernameKey: unique("users_username_key").on(table.username),
+		usersEmailKey: unique("users_email_key").on(table.email),
 	}
 });
 
@@ -197,5 +184,18 @@ export const locations = pgTable("locations", {
 (table) => {
 	return {
 		locationsGeoapifyPlaceIdKey: unique("locations_geoapify_place_id_key").on(table.geoapifyPlaceId),
+	}
+});
+
+export const artists = pgTable("artists", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	spotifyId: varchar("spotify_id", { length: 255 }).notNull(),
+	name: varchar("name", { length: 255 }).notNull(),
+},
+(table) => {
+	return {
+		artistsSpotifyIdKey: unique("artists_spotify_id_key").on(table.spotifyId),
 	}
 });

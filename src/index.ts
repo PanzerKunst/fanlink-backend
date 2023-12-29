@@ -1,24 +1,19 @@
 import * as dotenv from "dotenv"
 dotenv.config()
 
-import { exec } from "node:child_process"
-import express, { Request, Response } from "express"
 import cors from "cors"
+import dayjs from "dayjs"
+import express, { Request, Response } from "express"
 import _isEmpty from "lodash/isEmpty"
-import { config } from "./config"
-import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
+import { exec } from "node:child_process"
 import { migrateDb } from "./DB/DB"
-import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds } from "./DB/Queries/Artists"
-import { deleteUser, insertUser, selectUserOfId, selectUserOfSpotifyId, selectUserOfUsername, updateUser } from "./DB/Queries/Users"
-import { httpStatusCode } from "./Util/HttpUtils"
-import { insertUserFavouriteArtists } from "./DB/Queries/UserFavouriteArtists"
-import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewPost, NewUser, Post, User } from "./Models/DrizzleModels"
-import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
-import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
-import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
-import { insertMusicGenres, selectAllMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "./DB/Queries/ArtistMusicGenres"
-import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
+import { insertArtists, selectArtistOfSpotifyId, selectArtistsOfSpotifyIds } from "./DB/Queries/Artists"
+import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
+import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
+import { insertMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
+import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
+import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
 import {
   deletePost,
   insertPost,
@@ -27,11 +22,16 @@ import {
   updatePost,
   updatePostPublicationStatusAndSlug
 } from "./DB/Queries/Posts"
-import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
-import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
-import { EmptyPostWithTags, PostWithAuthorAndTags } from "./Models/Backend/PostWithTags"
+import { insertUserFavouriteArtists } from "./DB/Queries/UserFavouriteArtists"
+import { deleteUser, insertUser, selectUserOfId, selectUserOfSpotifyId, selectUserOfUsername, updateUser } from "./DB/Queries/Users"
+import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 import { EmptyPost } from "./Models/Backend/Post"
-import dayjs from "dayjs"
+import { EmptyPostWithTags, PostWithAuthorAndTags } from "./Models/Backend/PostWithTags"
+import { Artist, Country, Location, MusicGenre, NewCountry, NewLocation, NewPost, NewUser, Post, User } from "./Models/DrizzleModels"
+import { GeoapifyFeature } from "./Models/Geoapify/GeoapifyFeature"
+import { SpotifyArtist } from "./Models/Spotify/SpotifyArtist"
+import { httpStatusCode } from "./Util/HttpUtils"
+import { config } from "./config"
 
 const app = express()
 const port = config.PORT
