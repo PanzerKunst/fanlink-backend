@@ -22,10 +22,10 @@ import { ArtistWithGenres } from "./Models/Backend/ArtistWithGenres"
 import {
   deletePost,
   insertPost,
-  selectEmptyPostOfId, selectPostOfId,
+  selectEmptyPostOfId, selectPostOfId, selectPostOfUserAndSlug,
   selectPostsOfUser,
   updatePost,
-  updatePostPublicationStatus
+  updatePostPublicationStatusAndSlug
 } from "./DB/Queries/Posts"
 import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
 import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
@@ -300,20 +300,6 @@ app.post("/userFavouriteArtists", async (req: Request, res: Response) => {
 })
 
 
-// Music genres
-
-app.get("/musicGenres", async (_req: Request, res: Response) => {
-  try {
-    const musicGenres: MusicGenre[] = await selectAllMusicGenres()
-
-    res.status(httpStatusCode.OK).json(musicGenres)
-  } catch (error) {
-    console.error(error)
-    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
-  }
-})
-
-
 // Posts
 
 app.post("/post", async (req: Request, res: Response) => {
@@ -334,8 +320,7 @@ app.post("/post", async (req: Request, res: Response) => {
 
     const emptyPostWithTags: EmptyPostWithTags = {
       post: insertedPost,
-      taggedArtists,
-      taggedGenres
+      taggedArtists
     }
 
     res.status(httpStatusCode.OK).json(emptyPostWithTags)
@@ -366,8 +351,7 @@ app.put("/post", async (req: Request, res: Response) => {
 
     const emptyPostWithTags: EmptyPostWithTags = {
       post: updatedPost,
-      taggedArtists,
-      taggedGenres
+      taggedArtists
     }
 
     res.status(httpStatusCode.OK).json(emptyPostWithTags)
@@ -388,9 +372,9 @@ app.put("/post/:id", async (req: Request, res: Response) => {
       return
     }
 
-    const storedEmptyPost: EmptyPost | undefined = await selectEmptyPostOfId(postId)
+    const storedPost: Post | undefined = await selectPostOfId(postId)
 
-    if (!storedEmptyPost) {
+    if (!storedPost) {
       res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
       return
     }
@@ -400,14 +384,12 @@ app.put("/post/:id", async (req: Request, res: Response) => {
       return
     }
 
-    const updatedEmptyPost: EmptyPost = await updatePostPublicationStatus(storedEmptyPost.id, req.query.publish === "true")
+    const updatedEmptyPost: EmptyPost = await updatePostPublicationStatusAndSlug(storedPost, req.query.publish === "true")
     const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
-    const taggedGenres: MusicGenre[] = await selectGenresTaggedInPost(postId)
 
     const emptyPostWithTags: EmptyPostWithTags = {
       post: updatedEmptyPost,
-      taggedArtists,
-      taggedGenres
+      taggedArtists
     }
 
     res.status(httpStatusCode.OK).json(emptyPostWithTags)
@@ -417,32 +399,40 @@ app.put("/post/:id", async (req: Request, res: Response) => {
   }
 })
 
-app.get("/post/:id", async (req, res) => {
+app.get("/post/:username/:slug", async (req, res) => {
   try {
-    const { id } = req.params
-    const postId = parseInt(id)
+    const { username, slug } = req.params
 
-    if (isNaN(postId)) {
-      res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
+    if (username === "") {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing 'username' in path")
       return
     }
 
-    const storedPost: Post | undefined = await selectPostOfId(postId)
+    const author: User | undefined = await selectUserOfUsername(username)
+
+    if (!author) {
+      res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+      return
+    }
+
+    if (slug === "") {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing 'slug' in path")
+      return
+    }
+
+    const storedPost: Post | undefined = await selectPostOfUserAndSlug(author.id, slug)
 
     if (!storedPost) {
       res.sendStatus(httpStatusCode.NO_CONTENT)
       return
     }
 
-    const author: User | undefined = await selectUserOfId(storedPost.userId!)
-    const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
-    const taggedGenres: MusicGenre[] = await selectGenresTaggedInPost(postId)
+    const taggedArtists: Artist[] = await selectArtistsTaggedInPost(author.id)
 
     const postWithAuthorAndTags: PostWithAuthorAndTags = {
       post: storedPost,
-      author: author!,
-      taggedArtists,
-      taggedGenres
+      author,
+      taggedArtists
     }
 
     res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
