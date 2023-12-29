@@ -333,9 +333,8 @@ app.put("/post", async (req: Request, res: Response) => {
     const updatedPost = await updatePost(post)
 
     const taggedArtists: Artist[] = req.body.taggedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-    const taggedGenres: Artist[] = req.body.taggedGenres as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
-    if (taggedArtists.length > 2 || taggedGenres.length > 2) {
+    if (taggedArtists.length > 2) {
       res.status(httpStatusCode.BAD_REQUEST).send("Too many tags")
       return
     }
@@ -387,6 +386,45 @@ app.put("/post/:id", async (req: Request, res: Response) => {
     }
 
     res.status(httpStatusCode.OK).json(emptyPostWithTags)
+  } catch (error) {
+    console.error(error)
+    res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+  }
+})
+
+app.get("/post/:id", async (req, res) => {
+  try {
+    const { id } = req.params
+    const postId = parseInt(id)
+
+    if (isNaN(postId)) {
+      res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
+      return
+    }
+
+    const storedPost: Post | undefined = await selectPostOfId(postId)
+
+    if (!storedPost) {
+      res.sendStatus(httpStatusCode.NO_CONTENT)
+      return
+    }
+
+    const author: User | undefined = await selectUserOfId(storedPost.userId!)
+
+    if (!author) {
+      res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+      return
+    }
+
+    const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
+
+    const postWithAuthorAndTags: PostWithAuthorAndTags = {
+      post: storedPost,
+      author,
+      taggedArtists
+    }
+
+    res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
   } catch (error) {
     console.error(error)
     res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
