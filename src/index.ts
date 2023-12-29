@@ -13,7 +13,6 @@ import { insertCountry, selectCountryOfCode } from "./DB/Queries/Countries"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "./DB/Queries/Locations"
 import { insertMusicGenres, selectMusicGenresOfNames } from "./DB/Queries/MusicGenres"
 import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "./DB/Queries/PostArtistTags"
-import { deletePostGenreTags, insertPostGenreTags, selectGenresTaggedInPost } from "./DB/Queries/PostGenreTags"
 import {
   deletePost,
   insertPost,
@@ -308,15 +307,13 @@ app.post("/post", async (req: Request, res: Response) => {
     const insertedPost = await insertPost(newPost)
 
     const taggedArtists: Artist[] = req.body.taggedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-    const taggedGenres: MusicGenre[] = req.body.taggedGenres as MusicGenre[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
-    if (taggedArtists.length > 2 || taggedGenres.length > 2) {
+    if (taggedArtists.length > 2) {
       res.status(httpStatusCode.BAD_REQUEST).send("Too many tags")
       return
     }
 
     await insertPostArtistTags(insertedPost, taggedArtists)
-    await insertPostGenreTags(insertedPost, taggedGenres)
 
     const emptyPostWithTags: EmptyPostWithTags = {
       post: insertedPost,
@@ -345,9 +342,6 @@ app.put("/post", async (req: Request, res: Response) => {
 
     await deletePostArtistTags(updatedPost)
     await insertPostArtistTags(updatedPost, taggedArtists)
-
-    await deletePostGenreTags(updatedPost)
-    await insertPostGenreTags(updatedPost, taggedGenres)
 
     const emptyPostWithTags: EmptyPostWithTags = {
       post: updatedPost,
@@ -477,16 +471,12 @@ app.get("/posts/user/:id", async (req, res) => {
     const usersPosts: Post[] = await selectPostsOfUser(userId)
 
     const usersPostsWithTagsPromises = usersPosts.map(async (post) => {
-      const [taggedArtists, taggedGenres] = await Promise.all([
-        selectArtistsTaggedInPost(post.id),
-        selectGenresTaggedInPost(post.id)
-      ])
-
+      const taggedArtists = await selectArtistsTaggedInPost(post.id)
+    
       return {
         post,
         author: user,
-        taggedArtists,
-        taggedGenres
+        taggedArtists
       }
     })
 
