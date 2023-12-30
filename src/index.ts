@@ -462,7 +462,7 @@ app.get("/post/:username/:slug", async (req, res) => {
       return
     }
 
-    const taggedArtists: Artist[] = await selectArtistsTaggedInPost(author.id)
+    const taggedArtists: Artist[] = await selectArtistsTaggedInPost(storedPost.id)
 
     const postWithAuthorAndTags: PostWithAuthorAndTags = {
       post: storedPost,
