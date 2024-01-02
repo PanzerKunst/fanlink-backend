@@ -145,6 +145,19 @@ export const userLocations = pgTable("user_locations", {
 	}
 });
 
+export const postArtistTags = pgTable("post_artist_tags", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" } ),
+	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		postArtistTagsPostIdArtistIdKey: unique("post_artist_tags_post_id_artist_id_key").on(table.postId, table.artistId),
+	}
+});
+
 export const posts = pgTable("posts", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -158,19 +171,6 @@ export const posts = pgTable("posts", {
 (table) => {
 	return {
 		postsUserIdSlugKey: unique("posts_user_id_slug_key").on(table.userId, table.slug),
-	}
-});
-
-export const postArtistTags = pgTable("post_artist_tags", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" } ),
-	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		postArtistTagsPostIdArtistIdKey: unique("post_artist_tags_post_id_artist_id_key").on(table.postId, table.artistId),
 	}
 });
 

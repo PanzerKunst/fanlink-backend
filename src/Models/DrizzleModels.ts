@@ -9,7 +9,6 @@ import {
   userLocations,
   userRepresentingArtists,
   users
-// @ts-ignore TS6059: File C:/Pro/fanlink-backend/drizzle/schema.ts is not under rootDir C:/Pro/fanlink-backend/src.
 } from "../../drizzle/schema"
 
 export type MusicGenre = typeof musicGenres.$inferSelect; // return type when queried
