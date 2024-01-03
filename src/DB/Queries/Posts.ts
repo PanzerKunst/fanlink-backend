@@ -6,7 +6,7 @@ import _isEmpty from "lodash/isEmpty"
 import { getPostSlug } from "../../Util/DomainUtils"
 
 export async function insertPost(newPost: NewPost): Promise<Post> {
-  const titleForDb = !_isEmpty(newPost.title) ? newPost.title! : undefined // Replacing "" by null
+  const titleForDb = !_isEmpty(newPost.title) ? newPost.title! : null // Replacing "" by null
 
   const newPostForDb: NewPost = {
     ...newPost,
@@ -27,14 +27,15 @@ export async function insertPost(newPost: NewPost): Promise<Post> {
 }
 
 export async function updatePost(post: Post): Promise<Post> {
-  const titleForDb = !_isEmpty(post.title) ? post.title! : undefined // Replacing "" by null
+  const titleForDb = !_isEmpty(post.title) ? post.title! : null // Replacing "" by null
 
   const query = db.update(posts)
     .set({
       updatedAt: sql`CURRENT_TIMESTAMP`,
       publishedAt: post.publishedAt,
       title: titleForDb,
-      content: post.content
+      content: post.content,
+      heroImagePath: post.heroImagePath || null
     })
     .where(eq(posts.id, post.id))
 
@@ -67,7 +68,7 @@ export async function updatePostPublicationStatusAndSlug(post: Post, isPublishin
   const query = db.update(posts)
     .set({
       updatedAt: sql`CURRENT_TIMESTAMP`,
-      publishedAt: isPublishing ? sql`CURRENT_TIMESTAMP` : undefined,
+      publishedAt: isPublishing ? sql`CURRENT_TIMESTAMP` : null,
       slug
     })
     .where(eq(posts.id, post.id))
