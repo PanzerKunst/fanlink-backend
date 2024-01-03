@@ -92,12 +92,20 @@ export function postRoutes(router: Router) {
         return
       }
 
+      const author: User | undefined = await selectUserOfId(storedPost.userId!)
+
+      if (!author) {
+        res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+        return
+      }
+
       const updatedPost: Post = await updatePostPublicationStatusAndSlug(storedPost, req.query.publish === "true")
       const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
 
       const postWithTags: PostWithTags = {
         post: updatedPost,
-        taggedArtists
+        taggedArtists,
+        author
       }
 
       res.status(httpStatusCode.OK).json(postWithTags)
