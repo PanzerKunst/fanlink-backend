@@ -2,11 +2,10 @@ import { NewPost, Post } from "../../Models/DrizzleModels"
 import { db } from "../DB"
 import { posts } from "../../../drizzle/schema"
 import { and, desc, eq, sql } from "drizzle-orm"
-import { EmptyPost } from "../../Models/Backend/Post"
 import _isEmpty from "lodash/isEmpty"
 import { getPostSlug } from "../../Util/DomainUtils"
 
-export async function insertPost(newPost: NewPost): Promise<EmptyPost> {
+export async function insertPost(newPost: NewPost): Promise<Post> {
   const titleForDb = !_isEmpty(newPost.title) ? newPost.title! : undefined // Replacing "" by null
 
   const newPostForDb: NewPost = {
@@ -17,16 +16,7 @@ export async function insertPost(newPost: NewPost): Promise<EmptyPost> {
   const query = db.insert(posts).values(newPostForDb)
     .onConflictDoNothing()
 
-  const rows = await query.returning({
-    id: posts.id,
-    createdAt: posts.createdAt,
-    updatedAt: posts.updatedAt,
-    publishedAt: posts.publishedAt,
-    userId: posts.userId,
-    slug: posts.slug,
-    title: posts.title
-  })
-
+  const rows = await query.returning()
   const row = rows.at(0)
 
   if (!row) {
@@ -36,7 +26,7 @@ export async function insertPost(newPost: NewPost): Promise<EmptyPost> {
   return row
 }
 
-export async function updatePost(post: Post): Promise<EmptyPost> {
+export async function updatePost(post: Post): Promise<Post> {
   const titleForDb = !_isEmpty(post.title) ? post.title! : undefined // Replacing "" by null
 
   const query = db.update(posts)
@@ -48,16 +38,7 @@ export async function updatePost(post: Post): Promise<EmptyPost> {
     })
     .where(eq(posts.id, post.id))
 
-  const rows = await query.returning({
-    id: posts.id,
-    createdAt: posts.createdAt,
-    updatedAt: posts.updatedAt,
-    publishedAt: posts.publishedAt,
-    userId: posts.userId,
-    slug: posts.slug,
-    title: posts.title
-  })
-
+  const rows = await query.returning()
   const row = rows.at(0)
 
   if (!row) {
@@ -67,25 +48,31 @@ export async function updatePost(post: Post): Promise<EmptyPost> {
   return row
 }
 
-export async function updatePostPublicationStatusAndSlug(post: Post, isPublishing: boolean): Promise<EmptyPost> {
+export async function updatePostPublicationStatusAndSlug(post: Post, isPublishing: boolean): Promise<Post> {
+  let slug = post.slug
+
+  // We never change the slug once set
+  if (!slug) {
+    slug = getPostSlug(post.content, post.title)
+
+    // If an existing post already has this slug, we add the current timestamp at the end
+    const existingPostForThisSlug = await selectPostOfUserAndSlug(post.userId!, slug)
+
+    if (existingPostForThisSlug) {
+      const timestamp = Date.now()
+      slug = `${slug}-${timestamp}`
+    }
+  }
+
   const query = db.update(posts)
     .set({
       updatedAt: sql`CURRENT_TIMESTAMP`,
       publishedAt: isPublishing ? sql`CURRENT_TIMESTAMP` : undefined,
-      slug: post.slug || getPostSlug(post.content, post.title) // We never change the slug once set
+      slug
     })
     .where(eq(posts.id, post.id))
 
-  const rows = await query.returning({
-    id: posts.id,
-    createdAt: posts.createdAt,
-    updatedAt: posts.updatedAt,
-    publishedAt: posts.publishedAt,
-    userId: posts.userId,
-    slug: posts.slug,
-    title: posts.title
-  })
-
+  const rows = await query.returning()
   const row = rows.at(0)
 
   if (!row) {
@@ -120,23 +107,7 @@ export async function selectPostsOfUser(userId: number): Promise<Post[]> {
     .orderBy(desc(posts.id))
 }
 
-export async function selectEmptyPostOfId(id: number): Promise<EmptyPost | undefined> {
-  const rows = await db.select({
-    id: posts.id,
-    createdAt: posts.createdAt,
-    updatedAt: posts.updatedAt,
-    publishedAt: posts.publishedAt,
-    userId: posts.userId,
-    slug: posts.slug,
-    title: posts.title
-  }).from(posts)
-    .where(eq(posts.id, id))
-    .limit(1)
-
-  return rows.at(0)
-}
-
-export async function deletePost(emptyPost: EmptyPost): Promise<void> {
+export async function deletePost(post: Post): Promise<void> {
   await db.delete(posts)
-    .where(eq(posts.id, emptyPost.id))
+    .where(eq(posts.id, post.id))
 }

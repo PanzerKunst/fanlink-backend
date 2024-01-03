@@ -1,18 +1,12 @@
-import { Artist, NewPost, Post, User } from "../DrizzleModels"
-import { EmptyPost } from "./Post"
+import { Artist, Post, User } from "../DrizzleModels"
 
-export type NewPostWithTags = {
+/* TODO export type NewPostWithTags = {
   post: NewPost;
   taggedArtists: Artist[];
-}
+} */
 
-export type PostWithAuthorAndTags = {
+export type PostWithTags = {
   post: Post;
-  author: User;
   taggedArtists: Artist[];
-}
-
-export type EmptyPostWithTags = {
-  post: EmptyPost;
-  taggedArtists: Artist[];
+  author?: User;
 }

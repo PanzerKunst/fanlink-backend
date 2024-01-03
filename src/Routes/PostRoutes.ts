@@ -4,7 +4,6 @@ import { Request, Response, Router } from "express"
 import {
   deletePost,
   insertPost,
-  selectEmptyPostOfId,
   selectPostOfId,
   selectPostOfUserAndSlug,
   selectPostsOfUser,
@@ -12,8 +11,7 @@ import {
   updatePostPublicationStatusAndSlug
 } from "../DB/Queries/Posts"
 import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "../DB/Queries/PostArtistTags"
-import { EmptyPostWithTags, PostWithAuthorAndTags } from "../Models/Backend/PostWithTags"
-import { EmptyPost } from "../Models/Backend/Post"
+import { PostWithTags } from "../Models/Backend/PostWithTags"
 import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
 
@@ -32,12 +30,12 @@ export function postRoutes(router: Router) {
 
       await insertPostArtistTags(insertedPost, taggedArtists)
 
-      const emptyPostWithTags: EmptyPostWithTags = {
+      const postWithTags: PostWithTags = {
         post: insertedPost,
         taggedArtists
       }
 
-      res.status(httpStatusCode.OK).json(emptyPostWithTags)
+      res.status(httpStatusCode.OK).json(postWithTags)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -59,12 +57,12 @@ export function postRoutes(router: Router) {
       await deletePostArtistTags(updatedPost)
       await insertPostArtistTags(updatedPost, taggedArtists)
 
-      const emptyPostWithTags: EmptyPostWithTags = {
+      const postWithTags: PostWithTags = {
         post: updatedPost,
         taggedArtists
       }
 
-      res.status(httpStatusCode.OK).json(emptyPostWithTags)
+      res.status(httpStatusCode.OK).json(postWithTags)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -94,15 +92,15 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const updatedEmptyPost: EmptyPost = await updatePostPublicationStatusAndSlug(storedPost, req.query.publish === "true")
+      const updatedPost: Post = await updatePostPublicationStatusAndSlug(storedPost, req.query.publish === "true")
       const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
 
-      const emptyPostWithTags: EmptyPostWithTags = {
-        post: updatedEmptyPost,
+      const postWithTags: PostWithTags = {
+        post: updatedPost,
         taggedArtists
       }
 
-      res.status(httpStatusCode.OK).json(emptyPostWithTags)
+      res.status(httpStatusCode.OK).json(postWithTags)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -135,10 +133,10 @@ export function postRoutes(router: Router) {
 
       const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
 
-      const postWithAuthorAndTags: PostWithAuthorAndTags = {
+      const postWithAuthorAndTags: PostWithTags = {
         post: storedPost,
-        author,
-        taggedArtists
+        taggedArtists,
+        author
       }
 
       res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
@@ -178,10 +176,10 @@ export function postRoutes(router: Router) {
 
       const taggedArtists: Artist[] = await selectArtistsTaggedInPost(storedPost.id)
 
-      const postWithAuthorAndTags: PostWithAuthorAndTags = {
+      const postWithAuthorAndTags: PostWithTags = {
         post: storedPost,
-        author,
-        taggedArtists
+        taggedArtists,
+        author
       }
 
       res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
@@ -193,16 +191,16 @@ export function postRoutes(router: Router) {
 
   router.delete("/post", async (req, res) => {
     try {
-      const emptyPost = req.body.emptyPost as EmptyPost // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      const storedEmptyPost = await selectEmptyPostOfId(emptyPost.id)
+      const post = req.body.post as Post // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      const storedPost = await selectPostOfId(post.id)
 
-      if (!storedEmptyPost) {
+      if (!storedPost) {
         res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
         return
       }
 
-      if (dayjs(storedEmptyPost.createdAt).isSame(dayjs(emptyPost.createdAt), "millisecond")) {
-        await deletePost(emptyPost)
+      if (dayjs(storedPost.createdAt).isSame(dayjs(post.createdAt), "millisecond")) {
+        await deletePost(post)
       }
 
       res.sendStatus(httpStatusCode.OK)
@@ -235,7 +233,7 @@ export function postRoutes(router: Router) {
         }
       })
 
-      const usersPostsWithTags: PostWithAuthorAndTags[] = await Promise.all(usersPostsWithTagsPromises)
+      const usersPostsWithTags: PostWithTags[] = await Promise.all(usersPostsWithTagsPromises)
 
       res.status(httpStatusCode.OK).json(usersPostsWithTags)
     } catch (error) {

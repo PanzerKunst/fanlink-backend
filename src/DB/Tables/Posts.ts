@@ -15,6 +15,7 @@ async function createTablePosts() {
     user_id integer,
     slug character varying(255), /* only set upon first publication */
     title character varying(255),
+    hero_image_path character varying(255),
     content text NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (user_id, slug),

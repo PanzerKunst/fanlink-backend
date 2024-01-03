@@ -3,6 +3,18 @@ import { pgTable, unique, serial, timestamp, varchar, foreignKey, integer, numer
 import { sql } from "drizzle-orm"
 
 
+export const musicGenres = pgTable("music_genres", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	name: varchar("name", { length: 255 }).notNull(),
+},
+(table) => {
+	return {
+		musicGenresNameKey: unique("music_genres_name_key").on(table.name),
+	}
+});
+
 export const countries = pgTable("countries", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -75,18 +87,6 @@ export const artistMusicGenres = pgTable("artist_music_genres", {
 	}
 });
 
-export const musicGenres = pgTable("music_genres", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	name: varchar("name", { length: 255 }).notNull(),
-},
-(table) => {
-	return {
-		musicGenresNameKey: unique("music_genres_name_key").on(table.name),
-	}
-});
-
 export const users = pgTable("users", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -145,6 +145,23 @@ export const userLocations = pgTable("user_locations", {
 	}
 });
 
+export const posts = pgTable("posts", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
+	userId: integer("user_id").references(() => users.id, { onDelete: "set null" } ),
+	slug: varchar("slug", { length: 255 }),
+	title: varchar("title", { length: 255 }),
+	heroImagePath: varchar("hero_image_path", { length: 255 }),
+	content: text("content").notNull(),
+},
+(table) => {
+	return {
+		postsUserIdSlugKey: unique("posts_user_id_slug_key").on(table.userId, table.slug),
+	}
+});
+
 export const postArtistTags = pgTable("post_artist_tags", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -155,22 +172,6 @@ export const postArtistTags = pgTable("post_artist_tags", {
 (table) => {
 	return {
 		postArtistTagsPostIdArtistIdKey: unique("post_artist_tags_post_id_artist_id_key").on(table.postId, table.artistId),
-	}
-});
-
-export const posts = pgTable("posts", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
-	userId: integer("user_id").references(() => users.id, { onDelete: "set null" } ),
-	slug: varchar("slug", { length: 255 }),
-	title: varchar("title", { length: 255 }),
-	content: text("content").notNull(),
-},
-(table) => {
-	return {
-		postsUserIdSlugKey: unique("posts_user_id_slug_key").on(table.userId, table.slug),
 	}
 });
 
