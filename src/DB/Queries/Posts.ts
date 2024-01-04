@@ -35,7 +35,8 @@ export async function updatePost(post: Post): Promise<Post> {
       publishedAt: post.publishedAt,
       title: titleForDb,
       content: post.content,
-      heroImagePath: post.heroImagePath || null
+      heroImagePath: post.heroImagePath || null,
+      heroVideoUrl: post.heroVideoUrl || null,
     })
     .where(eq(posts.id, post.id))
 
