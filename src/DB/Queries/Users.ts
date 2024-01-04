@@ -1,6 +1,6 @@
 import { db } from "../DB"
 import { eq, sql } from "drizzle-orm"
-import { users } from "../../../drizzle/schema"
+import { users } from "../_Generated/Drizzle/schema"
 import { NewUser, User } from "../../Models/DrizzleModels"
 
 export async function insertUser(newUser: NewUser): Promise<User> {

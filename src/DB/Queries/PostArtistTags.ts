@@ -1,6 +1,6 @@
 import _isEmpty from "lodash/isEmpty"
 import { db } from "../DB"
-import { postArtistTags } from "../../../drizzle/schema"
+import { postArtistTags } from "../_Generated/Drizzle/schema"
 import { Artist, NewPostArtistTag, Post, PostArtistTag } from "../../Models/DrizzleModels"
 import { eq } from "drizzle-orm"
 import { selectArtistsOfIds } from "./Artists"

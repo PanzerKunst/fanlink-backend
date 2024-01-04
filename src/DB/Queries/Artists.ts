@@ -2,7 +2,7 @@ import _isEmpty from "lodash/isEmpty"
 import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
 import { db } from "../DB"
 import { Artist, NewArtist } from "../../Models/DrizzleModels"
-import { artists } from "../../../drizzle/schema"
+import { artists } from "../_Generated/Drizzle/schema"
 import { eq, inArray } from "drizzle-orm"
 
 export async function insertArtists(spotifyArtists: SpotifyArtist[]): Promise<Artist[]> {

@@ -1,6 +1,6 @@
 import _isEmpty from "lodash/isEmpty"
 import { db } from "../DB"
-import { artistMusicGenres } from "../../../drizzle/schema"
+import { artistMusicGenres } from "../_Generated/Drizzle/schema"
 import { eq } from "drizzle-orm"
 import { Artist, ArtistMusicGenre, MusicGenre, NewArtistMusicGenre } from "../../Models/DrizzleModels"
 import { selectMusicGenresOfIds } from "./MusicGenres"

@@ -1,7 +1,7 @@
 import { inArray } from "drizzle-orm"
 import { MusicGenre, NewMusicGenre } from "../../Models/DrizzleModels"
 import { db } from "../DB"
-import { musicGenres } from "../../../drizzle/schema"
+import { musicGenres } from "../_Generated/Drizzle/schema"
 import _isEmpty from "lodash/isEmpty"
 
 export async function insertMusicGenres(names: string[]): Promise<MusicGenre[]> {

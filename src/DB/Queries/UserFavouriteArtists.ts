@@ -1,6 +1,6 @@
 import _isEmpty from "lodash/isEmpty"
 import { db } from "../DB"
-import { userFavouriteArtists } from "../../../drizzle/schema"
+import { userFavouriteArtists } from "../_Generated/Drizzle/schema"
 import { Artist, NewUserFavouriteArtist, User, UserFavouriteArtist } from "../../Models/DrizzleModels"
 import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
 

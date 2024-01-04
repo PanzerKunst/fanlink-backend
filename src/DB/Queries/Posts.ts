@@ -1,6 +1,6 @@
 import { NewPost, Post } from "../../Models/DrizzleModels"
 import { db } from "../DB"
-import { posts } from "../../../drizzle/schema"
+import { posts } from "../_Generated/Drizzle/schema"
 import { and, desc, eq, sql } from "drizzle-orm"
 import _isEmpty from "lodash/isEmpty"
 import { getPostSlug } from "../../Util/DomainUtils"

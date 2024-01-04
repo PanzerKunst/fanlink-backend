@@ -9,7 +9,7 @@ import {
   userLocations,
   userRepresentingArtists,
   users
-} from "../../drizzle/schema"
+} from "../DB/_Generated/Drizzle/schema"
 
 export type MusicGenre = typeof musicGenres.$inferSelect; // return type when queried
 export type NewMusicGenre = typeof musicGenres.$inferInsert; // insert type

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm"
 import { Country, NewCountry } from "../../Models/DrizzleModels"
 import { db } from "../DB"
-import { countries } from "../../../drizzle/schema"
+import { countries } from "../_Generated/Drizzle/schema"
 
 export async function insertCountry(newCountry: NewCountry): Promise<Country> {
   const query = db.insert(countries).values(newCountry)

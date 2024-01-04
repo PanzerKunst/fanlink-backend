@@ -1,6 +1,6 @@
 import { db } from "../DB"
 import { Location, NewLocation } from "../../Models/DrizzleModels"
-import { locations } from "../../../drizzle/schema"
+import { locations } from "../_Generated/Drizzle/schema"
 import { eq } from "drizzle-orm"
 
 export async function insertLocation(newLocation: NewLocation): Promise<Location> {
