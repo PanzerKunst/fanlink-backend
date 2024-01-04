@@ -40,7 +40,7 @@ export function fileRoutes(router: Router) {
     }
   })
 
-  router.post("/file/image/form-data", formDataFileUploader.single("image"), (req: Request, res: Response) => {
+  router.post("/file/form-data", formDataFileUploader.single("file"), (req: Request, res: Response) => {
     try {
       const file = req.file
 
