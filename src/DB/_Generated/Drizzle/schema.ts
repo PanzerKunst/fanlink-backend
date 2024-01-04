@@ -154,6 +154,7 @@ export const posts = pgTable("posts", {
 	slug: varchar("slug", { length: 255 }),
 	title: varchar("title", { length: 255 }),
 	heroImagePath: varchar("hero_image_path", { length: 255 }),
+	heroVideoUrl: varchar("hero_video_url", { length: 255 }),
 	content: text("content").notNull(),
 },
 (table) => {

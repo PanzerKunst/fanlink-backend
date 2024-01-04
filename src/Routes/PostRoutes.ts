@@ -19,7 +19,11 @@ export function postRoutes(router: Router) {
   router.post("/post", async (req: Request, res: Response) => {
     try {
       const newPost: NewPost = req.body.post as NewPost // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      const insertedPost = await insertPost(newPost)
+
+      if (newPost.heroImagePath && newPost.heroVideoUrl) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Hero image and video cannot be set at the same time")
+        return
+      }
 
       const taggedArtists: Artist[] = req.body.taggedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
@@ -28,6 +32,7 @@ export function postRoutes(router: Router) {
         return
       }
 
+      const insertedPost = await insertPost(newPost)
       await insertPostArtistTags(insertedPost, taggedArtists)
 
       const postWithTags: PostWithTags = {
@@ -45,7 +50,11 @@ export function postRoutes(router: Router) {
   router.put("/post", async (req: Request, res: Response) => {
     try {
       const post: Post = req.body.post as Post // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      const updatedPost = await updatePost(post)
+
+      if (post.heroImagePath && post.heroVideoUrl) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Hero image and video cannot be set at the same time")
+        return
+      }
 
       const taggedArtists: Artist[] = req.body.taggedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
@@ -54,6 +63,7 @@ export function postRoutes(router: Router) {
         return
       }
 
+      const updatedPost = await updatePost(post)
       await deletePostArtistTags(updatedPost)
       await insertPostArtistTags(updatedPost, taggedArtists)
 
