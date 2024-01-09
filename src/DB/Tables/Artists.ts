@@ -11,8 +11,8 @@ async function createTableArtists() {
     id serial,
     created_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
-    spotify_id character varying(255) NOT NULL UNIQUE,
-    name character varying(255) NOT NULL,
+    spotify_id character varying(256) NOT NULL UNIQUE,
+    name character varying(256) NOT NULL,
     PRIMARY KEY (id)
   )`
 }

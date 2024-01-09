@@ -11,7 +11,7 @@ async function createTableMusicGenres() {
     id serial,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    name character varying(255) NOT NULL UNIQUE,
+    name character varying(256) NOT NULL UNIQUE,
     PRIMARY KEY (id)
   )`
 }

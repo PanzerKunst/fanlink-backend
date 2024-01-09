@@ -13,10 +13,10 @@ async function createTablePosts() {
     updated_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     published_at timestamp with time zone,
     user_id integer,
-    slug character varying(255), /* only set upon first publication */
-    title character varying(255),
-    hero_image_path character varying(255),
-    hero_video_url character varying(255),
+    slug character varying(256), /* only set upon first publication */
+    title character varying(256),
+    hero_image_path character varying(256),
+    hero_video_url character varying(256),
     content text NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (user_id, slug),

@@ -13,9 +13,9 @@ async function createTableUsers() {
     created_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
     updated_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
     last_seen_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
-    spotify_id character varying(255) NOT NULL UNIQUE,
-    name character varying(255) NOT NULL,
-    username character varying(255) NOT NULL UNIQUE,
+    spotify_id character varying(256) NOT NULL UNIQUE,
+    name character varying(256) NOT NULL,
+    username character varying(256) NOT NULL UNIQUE,
     PRIMARY KEY (id)
   )`
 }
@@ -37,5 +37,6 @@ async function addColumnEmail() {
   
   await pgSql`
   ALTER TABLE IF EXISTS public.users
-    ADD COLUMN email character varying(255) NOT NULL UNIQUE`
+    ADD COLUMN email character varying(256) NOT NULL UNIQUE,
+    ADD COLUMN avatar_url character varying(512)`
 }
