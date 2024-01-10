@@ -3,7 +3,7 @@ import { Artist, MusicGenre, User } from "../Models/DrizzleModels"
 import { Request, Response, Router } from "express"
 import { SpotifyArtist } from "../Models/Spotify/SpotifyArtist"
 import _isEmpty from "lodash/isEmpty"
-import { insertArtists, selectArtistsOfSpotifyIds } from "../DB/Queries/Artists"
+import { insertArtist, selectArtistOfSpotifyId, selectArtistOfTagName, selectArtistsOfSpotifyIds } from "../DB/Queries/Artists"
 import { insertMusicGenres, selectMusicGenresOfNames } from "../DB/Queries/MusicGenres"
 import { insertArtistMusicGenres, selectMusicGenresForArtists } from "../DB/Queries/ArtistMusicGenres"
 import { ArtistWithGenres } from "../Models/Backend/ArtistWithGenres"
@@ -45,7 +45,15 @@ export function artistRoutes(router: Router) {
         return
       }
 
-      const insertedArtists: Artist[] = await insertArtists(spotifyArtists)
+      const insertedArtists: Artist[] = []
+
+      for (const spotifyArtist of spotifyArtists) {
+        const storedArtist: Artist | undefined = await selectArtistOfSpotifyId(spotifyArtist.id)
+
+        if (!storedArtist) {
+          insertedArtists.push(await insertArtist(spotifyArtist))
+        }
+      }
 
       // Insert MusicGenres
       const genreNames = spotifyArtists.flatMap(artist => artist.genres)
@@ -90,6 +98,29 @@ export function artistRoutes(router: Router) {
       await insertUserFavouriteArtists(user, userFavourites, followedArtists)
 
       res.status(httpStatusCode.OK).json(userFavourites)
+    } catch (error) {
+      console.error(error)
+      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+    }
+  })
+
+  router.get("/artist/tag/:tagName", async (req, res) => {
+    try {
+      const { tagName } = req.params
+
+      if (tagName === "") {
+        res.status(httpStatusCode.BAD_REQUEST).send("Missing 'tagName' in path")
+        return
+      }
+
+      const alreadyStored: Artist | undefined = await selectArtistOfTagName(tagName)
+
+      if (!alreadyStored) {
+        res.sendStatus(httpStatusCode.NO_CONTENT)
+        return
+      }
+
+      res.status(httpStatusCode.OK).json(alreadyStored)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)

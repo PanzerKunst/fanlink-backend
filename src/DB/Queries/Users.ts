@@ -1,5 +1,5 @@
 import { db } from "../DB"
-import { eq, sql } from "drizzle-orm"
+import { eq, ilike, sql } from "drizzle-orm"
 import { users } from "../_Generated/Drizzle/schema"
 import { NewUser, User } from "../../Models/DrizzleModels"
 
@@ -35,7 +35,7 @@ export async function selectUserOfSpotifyId(spotifyId: string): Promise<User | u
 
 export async function selectUserOfUsername(username: string): Promise<User | undefined> {
   const rows = await db.select().from(users)
-    .where(eq(users.username, username))
+    .where(ilike(users.username, username))
     .limit(1)
 
   return rows.at(0)

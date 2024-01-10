@@ -1,7 +1,7 @@
 import { NewPost, Post } from "../../Models/DrizzleModels"
 import { db } from "../DB"
 import { posts } from "../_Generated/Drizzle/schema"
-import { and, desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import _isEmpty from "lodash/isEmpty"
 import { getPostSlug } from "../../Util/DomainUtils"
 
@@ -84,12 +84,26 @@ export async function updatePostPublicationStatusAndSlug(post: Post, isPublishin
   return row
 }
 
+export async function deletePost(post: Post): Promise<void> {
+  await db.delete(posts)
+    .where(eq(posts.id, post.id))
+}
+
 export async function selectPostOfId(id: number): Promise<Post | undefined> {
   const rows = await db.select().from(posts)
     .where(eq(posts.id, id))
     .limit(1)
 
   return rows.at(0)
+}
+
+export async function selectPostsOfIds(ids: number[]): Promise<Post[]> {
+  if (_isEmpty(ids)) {
+    return []
+  }
+
+  return db.select().from(posts)
+    .where(inArray(posts.id, ids))
 }
 
 export async function selectPostOfUserAndSlug(userId: number, slug: string): Promise<Post | undefined> {
@@ -107,9 +121,4 @@ export async function selectPostsOfUser(userId: number): Promise<Post[]> {
   return db.select().from(posts)
     .where(eq(posts.userId, userId))
     .orderBy(desc(posts.id))
-}
-
-export async function deletePost(post: Post): Promise<void> {
-  await db.delete(posts)
-    .where(eq(posts.id, post.id))
 }

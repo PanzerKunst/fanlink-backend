@@ -34,3 +34,10 @@ export async function selectArtistsTaggedInPost(postId: number): Promise<Artist[
 
   return await selectArtistsOfIds(artistTags.map((postArtistTag: PostArtistTag) => postArtistTag.artistId))
 }
+
+export async function selectPostIdsTaggingArtist(artist: Artist): Promise<number[]> {
+  const rows = await db.select().from(postArtistTags)
+    .where(eq(postArtistTags.artistId, artist.id))
+
+  return rows.map(row => row.postId)
+}

@@ -2,7 +2,8 @@ select * from users;
 
 select * from music_genres order by name;
 
-select * from artists;
+select * from artists
+order by name;
 
 select * from artist_music_genres;
 

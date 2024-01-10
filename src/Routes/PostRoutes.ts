@@ -5,15 +5,16 @@ import {
   deletePost,
   insertPost,
   selectPostOfId,
-  selectPostOfUserAndSlug,
+  selectPostOfUserAndSlug, selectPostsOfIds,
   selectPostsOfUser,
   updatePost,
   updatePostPublicationStatusAndSlug
 } from "../DB/Queries/Posts"
-import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost } from "../DB/Queries/PostArtistTags"
+import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost, selectPostIdsTaggingArtist } from "../DB/Queries/PostArtistTags"
 import { PostWithTags } from "../Models/Backend/PostWithTags"
 import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
+import { selectArtistOfTagName } from "../DB/Queries/Artists"
 
 export function postRoutes(router: Router) {
   router.post("/post", async (req: Request, res: Response) => {
@@ -125,6 +126,27 @@ export function postRoutes(router: Router) {
     }
   })
 
+  router.delete("/post", async (req, res) => {
+    try {
+      const post = req.body.post as Post // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      const storedPost = await selectPostOfId(post.id)
+
+      if (!storedPost) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
+        return
+      }
+
+      if (dayjs(storedPost.createdAt).isSame(dayjs(post.createdAt), "millisecond")) {
+        await deletePost(post)
+      }
+
+      res.sendStatus(httpStatusCode.OK)
+    } catch (error) {
+      console.error(error)
+      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+    }
+  })
+
   router.get("/post/:id", async (req, res) => {
     try {
       const { id } = req.params
@@ -207,53 +229,76 @@ export function postRoutes(router: Router) {
     }
   })
 
-  router.delete("/post", async (req, res) => {
+  router.get("/posts/user/:username", async (req, res) => {
     try {
-      const post = req.body.post as Post // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      const storedPost = await selectPostOfId(post.id)
+      const { username } = req.params
 
-      if (!storedPost) {
-        res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
+      if (username === "") {
+        res.status(httpStatusCode.BAD_REQUEST).send("Missing 'username' in path")
         return
       }
 
-      if (dayjs(storedPost.createdAt).isSame(dayjs(post.createdAt), "millisecond")) {
-        await deletePost(post)
+      const author: User | undefined = await selectUserOfUsername(username)
+
+      if (!author) {
+        res.status(httpStatusCode.OK).json([])
+        return
       }
 
-      res.sendStatus(httpStatusCode.OK)
+      const authorsPosts: Post[] = await selectPostsOfUser(author.id)
+
+      const authorsPostsWithTagsPromises = authorsPosts.map(async (post) => {
+        const taggedArtists = await selectArtistsTaggedInPost(post.id)
+
+        return {
+          post,
+          author,
+          taggedArtists
+        }
+      })
+
+      const authorsPostsWithTags: PostWithTags[] = await Promise.all(authorsPostsWithTagsPromises)
+
+      res.status(httpStatusCode.OK).json(authorsPostsWithTags)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
     }
   })
 
-  router.get("/posts/user/:id", async (req, res) => {
+  router.get("/posts/artist/:tagName", async (req, res) => {
     try {
-      const { id } = req.params
-      const userId = parseInt(id || "")
+      const { tagName } = req.params
 
-      if (isNaN(userId)) {
-        res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
+      if (tagName === "") {
+        res.status(httpStatusCode.BAD_REQUEST).send("Missing 'tagName' in path")
         return
       }
 
-      const user: User = (await selectUserOfId(userId))!
-      const usersPosts: Post[] = await selectPostsOfUser(userId)
+      const artist: Artist | undefined = await selectArtistOfTagName(tagName)
 
-      const usersPostsWithTagsPromises = usersPosts.map(async (post) => {
+      if (!artist) {
+        res.status(httpStatusCode.OK).json([])
+        return
+      }
+
+      const postIdsTaggingArtist: number[] = await selectPostIdsTaggingArtist(artist)
+      const postsTaggingArtist: Post[] = await selectPostsOfIds(postIdsTaggingArtist)
+
+      const postsWithAuthorAndTagsPromises = postsTaggingArtist.map(async (post) => {
+        const author = await selectUserOfId(post.userId!)
         const taggedArtists = await selectArtistsTaggedInPost(post.id)
 
         return {
           post,
-          author: user,
+          author,
           taggedArtists
         }
       })
 
-      const usersPostsWithTags: PostWithTags[] = await Promise.all(usersPostsWithTagsPromises)
+      const postsWithAuthorAndTags: PostWithTags[] = await Promise.all(postsWithAuthorAndTagsPromises)
 
-      res.status(httpStatusCode.OK).json(usersPostsWithTags)
+      res.status(httpStatusCode.OK).json(postsWithAuthorAndTags)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
