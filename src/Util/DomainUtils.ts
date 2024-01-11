@@ -1,5 +1,9 @@
 import { removeAccents, removePunctuation, stripHtml } from "./StringUtils"
 import { selectArtistOfTagName } from "../DB/Queries/Artists"
+import { Artist, Post, User } from "../Models/DrizzleModels"
+import { PostWithTags } from "../Models/Backend/PostWithTags"
+import { selectUserOfId } from "../DB/Queries/Users"
+import { selectArtistsTaggedInPost } from "../DB/Queries/PostArtistTags"
 
 export function asTag(text: string) {
   const withoutAccents = removeAccents(text)
@@ -34,4 +38,20 @@ export async function getAvailableArtistTagName(artistName: string): Promise<str
   }
 
   return tagName
+}
+
+export async function getPostWithTags(post: Post, isAuthorRequired: boolean = true): Promise<PostWithTags> {
+  const author: User | undefined = await selectUserOfId(post.userId!)
+
+  if (isAuthorRequired && !author) {
+    throw new Error("Post author not found in DB")
+  }
+
+  const taggedArtists: Artist[] = await selectArtistsTaggedInPost(post.id)
+
+  return {
+    post,
+    author,
+    taggedArtists
+  }
 }

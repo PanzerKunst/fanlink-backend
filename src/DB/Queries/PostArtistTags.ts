@@ -35,9 +35,9 @@ export async function selectArtistsTaggedInPost(postId: number): Promise<Artist[
   return await selectArtistsOfIds(artistTags.map((postArtistTag: PostArtistTag) => postArtistTag.artistId))
 }
 
-export async function selectPostIdsTaggingArtist(artist: Artist): Promise<number[]> {
+export async function selectPostIdsTaggingArtist(artistId: number): Promise<number[]> {
   const rows = await db.select().from(postArtistTags)
-    .where(eq(postArtistTags.artistId, artist.id))
+    .where(eq(postArtistTags.artistId, artistId))
 
   return rows.map(row => row.postId)
 }

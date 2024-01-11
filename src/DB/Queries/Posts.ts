@@ -104,6 +104,7 @@ export async function selectPostsOfIds(ids: number[]): Promise<Post[]> {
 
   return db.select().from(posts)
     .where(inArray(posts.id, ids))
+    .orderBy(desc(posts.publishedAt), desc(posts.id))
 }
 
 export async function selectPostOfUserAndSlug(userId: number, slug: string): Promise<Post | undefined> {
@@ -120,5 +121,5 @@ export async function selectPostOfUserAndSlug(userId: number, slug: string): Pro
 export async function selectPostsOfUser(userId: number): Promise<Post[]> {
   return db.select().from(posts)
     .where(eq(posts.userId, userId))
-    .orderBy(desc(posts.id))
+    .orderBy(desc(posts.publishedAt), desc(posts.id))
 }

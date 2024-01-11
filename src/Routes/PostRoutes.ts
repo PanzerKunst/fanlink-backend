@@ -10,11 +10,12 @@ import {
   updatePost,
   updatePostPublicationStatusAndSlug
 } from "../DB/Queries/Posts"
-import { deletePostArtistTags, insertPostArtistTags, selectArtistsTaggedInPost, selectPostIdsTaggingArtist } from "../DB/Queries/PostArtistTags"
+import { deletePostArtistTags, insertPostArtistTags, selectPostIdsTaggingArtist } from "../DB/Queries/PostArtistTags"
 import { PostWithTags } from "../Models/Backend/PostWithTags"
 import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
 import { selectArtistOfTagName } from "../DB/Queries/Artists"
+import { getPostWithTags } from "../Util/DomainUtils"
 
 export function postRoutes(router: Router) {
   router.post("/post", async (req: Request, res: Response) => {
@@ -35,11 +36,7 @@ export function postRoutes(router: Router) {
 
       const insertedPost = await insertPost(newPost)
       await insertPostArtistTags(insertedPost, taggedArtists)
-
-      const postWithTags: PostWithTags = {
-        post: insertedPost,
-        taggedArtists
-      }
+      const postWithTags = await getPostWithTags(insertedPost, false)
 
       res.status(httpStatusCode.OK).json(postWithTags)
     } catch (error) {
@@ -67,11 +64,7 @@ export function postRoutes(router: Router) {
       const updatedPost = await updatePost(post)
       await deletePostArtistTags(updatedPost)
       await insertPostArtistTags(updatedPost, taggedArtists)
-
-      const postWithTags: PostWithTags = {
-        post: updatedPost,
-        taggedArtists
-      }
+      const postWithTags = await getPostWithTags(updatedPost, false)
 
       res.status(httpStatusCode.OK).json(postWithTags)
     } catch (error) {
@@ -111,15 +104,9 @@ export function postRoutes(router: Router) {
       }
 
       const updatedPost: Post = await updatePostPublicationStatusAndSlug(storedPost, req.query.publish === "true")
-      const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
+      const postWithAuthorAndTags = await getPostWithTags(updatedPost)
 
-      const postWithTags: PostWithTags = {
-        post: updatedPost,
-        taggedArtists,
-        author
-      }
-
-      res.status(httpStatusCode.OK).json(postWithTags)
+      res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -164,20 +151,7 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const author: User | undefined = await selectUserOfId(storedPost.userId!)
-
-      if (!author) {
-        res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
-        return
-      }
-
-      const taggedArtists: Artist[] = await selectArtistsTaggedInPost(postId)
-
-      const postWithAuthorAndTags: PostWithTags = {
-        post: storedPost,
-        taggedArtists,
-        author
-      }
+      const postWithAuthorAndTags = await getPostWithTags(storedPost)
 
       res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
     } catch (error) {
@@ -214,13 +188,7 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const taggedArtists: Artist[] = await selectArtistsTaggedInPost(storedPost.id)
-
-      const postWithAuthorAndTags: PostWithTags = {
-        post: storedPost,
-        taggedArtists,
-        author
-      }
+      const postWithAuthorAndTags = await getPostWithTags(storedPost)
 
       res.status(httpStatusCode.OK).json(postWithAuthorAndTags)
     } catch (error) {
@@ -248,13 +216,7 @@ export function postRoutes(router: Router) {
       const authorsPosts: Post[] = await selectPostsOfUser(author.id)
 
       const authorsPostsWithTagsPromises = authorsPosts.map(async (post) => {
-        const taggedArtists = await selectArtistsTaggedInPost(post.id)
-
-        return {
-          post,
-          author,
-          taggedArtists
-        }
+        return getPostWithTags(post)
       })
 
       const authorsPostsWithTags: PostWithTags[] = await Promise.all(authorsPostsWithTagsPromises)
@@ -282,23 +244,47 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const postIdsTaggingArtist: number[] = await selectPostIdsTaggingArtist(artist)
+      const postIdsTaggingArtist: number[] = await selectPostIdsTaggingArtist(artist.id)
       const postsTaggingArtist: Post[] = await selectPostsOfIds(postIdsTaggingArtist)
+      const publishedPostsTaggingArtist: Post[] = postsTaggingArtist.filter((post) => !!post.publishedAt)
 
-      const postsWithAuthorAndTagsPromises = postsTaggingArtist.map(async (post) => {
-        const author = await selectUserOfId(post.userId!)
-        const taggedArtists = await selectArtistsTaggedInPost(post.id)
-
-        return {
-          post,
-          author,
-          taggedArtists
-        }
+      const postsWithAuthorAndTagsPromises = publishedPostsTaggingArtist.map(async (post) => {
+        return getPostWithTags(post)
       })
 
       const postsWithAuthorAndTags: PostWithTags[] = await Promise.all(postsWithAuthorAndTagsPromises)
 
       res.status(httpStatusCode.OK).json(postsWithAuthorAndTags)
+    } catch (error) {
+      console.error(error)
+      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+    }
+  })
+
+  router.get("/posts/home/:id", async (req, res) => {
+    try {
+      const { id } = req.params
+      const userId = parseInt(id)
+
+      if (isNaN(userId)) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
+        return
+      }
+
+      const user: User | undefined = await selectUserOfId(userId)
+
+      if (!user) {
+        res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+        return
+      }
+
+      // Fetch all followed users
+
+      // Fetch all followed artists
+      /* const followedArtistIds = await selectArtistIdsFollowedByUser(user.id)
+      const followedArtists: Artist[] = await selectArtistsOfIds(followedArtistIds) */
+
+      res.status(httpStatusCode.OK).json([])
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
