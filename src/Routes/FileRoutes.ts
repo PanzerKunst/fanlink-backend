@@ -75,8 +75,36 @@ export function fileRoutes(router: Router) {
         return
       }
 
-      res.setHeader("Content-Type", getContentTypeFromFilePath(absolutePath))
-      fs.createReadStream(absolutePath).pipe(res)
+      const stat = fs.statSync(absolutePath)
+      const fileSize = stat.size
+      const range = req.headers.range
+
+      if (range) { // Range is required for playing videos on iOS
+        const parts = range.replace(/bytes=/, "").split("-")
+
+        if (parts.length === 0) {
+          throw new Error("Range header is invalid")
+        }
+
+        const start = parseInt(parts[0]!)
+        const end = parts[1] ? parseInt(parts[1]) : fileSize - 1
+
+        const chunksize = (end - start) + 1
+        const file = fs.createReadStream(absolutePath, { start, end })
+
+        const head = {
+          "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+          "Accept-Ranges": "bytes",
+          "Content-Length": chunksize,
+          "Content-Type": getContentTypeFromFilePath(absolutePath),
+        }
+
+        res.writeHead(206, head)
+        file.pipe(res)
+      } else { // Works fine with non-iOS browsers
+        res.setHeader("Content-Type", getContentTypeFromFilePath(absolutePath))
+        fs.createReadStream(absolutePath).pipe(res)
+      }
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
