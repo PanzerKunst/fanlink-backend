@@ -10,31 +10,6 @@ import { ArtistWithGenres } from "../Models/Backend/ArtistWithGenres"
 import { insertUserFavouriteArtists } from "../DB/Queries/UserFavouriteArtists"
 
 export function artistRoutes(router: Router) {
-  /* app.get("/artistsAndTheirGenres", async (req: Request, res: Response) => {
-    try {
-      let spotifyIds: string[] = []
-
-      try {
-        spotifyIds = JSON.parse(req.query.spotifyIds as string) as string[]
-      } catch (error) {
-        res.status(httpStatusCode.BAD_REQUEST).json(error)
-      }
-
-      if (_isEmpty(spotifyIds)) {
-        res.status(httpStatusCode.OK).json([])
-        return
-      }
-
-      const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyIds)
-      const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)
-
-      res.status(httpStatusCode.OK).json(artistAndTheirGenres)
-    } catch (error) {
-      console.error(error)
-      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
-    }
-  }) */
-
   router.post("/artists", async (req: Request, res: Response) => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

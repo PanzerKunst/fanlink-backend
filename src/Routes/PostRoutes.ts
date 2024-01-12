@@ -1,21 +1,14 @@
 import { httpStatusCode } from "../Util/HttpUtils"
 import { Artist, NewPost, Post, User } from "../Models/DrizzleModels"
 import { Request, Response, Router } from "express"
-import {
-  deletePost,
-  insertPost,
-  selectPostOfId,
-  selectPostOfUserAndSlug, selectPostsOfIds,
-  selectPostsOfUser,
-  updatePost,
-  updatePostPublicationStatusAndSlug
-} from "../DB/Queries/Posts"
-import { deletePostArtistTags, insertPostArtistTags, selectPostIdsTaggingArtist } from "../DB/Queries/PostArtistTags"
-import { PostWithTags } from "../Models/Backend/PostWithTags"
+import { deletePost, insertPost, selectPostOfId, selectPostOfUserAndSlug, updatePost, updatePostPublicationStatusAndSlug } from "../DB/Queries/Posts"
+import { deletePostArtistTags, insertPostArtistTags } from "../DB/Queries/PostArtistTags"
 import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
-import { selectArtistOfTagName } from "../DB/Queries/Artists"
-import { getPostWithTags } from "../Util/DomainUtils"
+import { selectArtistOfTagName, selectArtistsOfIds } from "../DB/Queries/Artists"
+import { fetchPostsByAuthor, fetchPostsTaggingArtist, fetchPostsTaggingArtists, getPostWithTags } from "../Util/DomainUtils"
+import { selectArtistIdsFollowedByUser } from "../DB/Queries/UserFavouriteArtists"
+import { isValidIsoDateString } from "../Util/ValidationUtils"
 
 export function postRoutes(router: Router) {
   router.post("/post", async (req: Request, res: Response) => {
@@ -206,6 +199,15 @@ export function postRoutes(router: Router) {
         return
       }
 
+      const { from } = req.query
+
+      if (!from || !isValidIsoDateString(from as string)) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Bad 'from' query param")
+        return
+      }
+
+      const fromDate = new Date(from as string)
+
       const author: User | undefined = await selectUserOfUsername(username)
 
       if (!author) {
@@ -213,13 +215,7 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const authorsPosts: Post[] = await selectPostsOfUser(author.id)
-
-      const authorsPostsWithTagsPromises = authorsPosts.map(async (post) => {
-        return getPostWithTags(post)
-      })
-
-      const authorsPostsWithTags: PostWithTags[] = await Promise.all(authorsPostsWithTagsPromises)
+      const authorsPostsWithTags = await fetchPostsByAuthor(author.id, fromDate)
 
       res.status(httpStatusCode.OK).json(authorsPostsWithTags)
     } catch (error) {
@@ -237,6 +233,15 @@ export function postRoutes(router: Router) {
         return
       }
 
+      const { from } = req.query
+
+      if (!from || !isValidIsoDateString(from as string)) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Bad 'from' query param")
+        return
+      }
+
+      const fromDate = new Date(from as string)
+
       const artist: Artist | undefined = await selectArtistOfTagName(tagName)
 
       if (!artist) {
@@ -244,15 +249,7 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const postIdsTaggingArtist: number[] = await selectPostIdsTaggingArtist(artist.id)
-      const postsTaggingArtist: Post[] = await selectPostsOfIds(postIdsTaggingArtist)
-      const publishedPostsTaggingArtist: Post[] = postsTaggingArtist.filter((post) => !!post.publishedAt)
-
-      const postsWithAuthorAndTagsPromises = publishedPostsTaggingArtist.map(async (post) => {
-        return getPostWithTags(post)
-      })
-
-      const postsWithAuthorAndTags: PostWithTags[] = await Promise.all(postsWithAuthorAndTagsPromises)
+      const postsWithAuthorAndTags = await fetchPostsTaggingArtist(artist.id, fromDate)
 
       res.status(httpStatusCode.OK).json(postsWithAuthorAndTags)
     } catch (error) {
@@ -278,13 +275,24 @@ export function postRoutes(router: Router) {
         return
       }
 
+      const { from } = req.query
+
+      if (!from || !isValidIsoDateString(from as string)) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Bad 'from' query param")
+        return
+      }
+
+      const fromDate = new Date(from as string)
+
       // Fetch all followed users
 
       // Fetch all followed artists
-      /* const followedArtistIds = await selectArtistIdsFollowedByUser(user.id)
-      const followedArtists: Artist[] = await selectArtistsOfIds(followedArtistIds) */
+      const followedArtistIds = await selectArtistIdsFollowedByUser(user.id)
+      const followedArtists: Artist[] = await selectArtistsOfIds(followedArtistIds)
 
-      res.status(httpStatusCode.OK).json([])
+      const postsTaggingFollowedArtists = await fetchPostsTaggingArtists(followedArtists, fromDate)
+
+      res.status(httpStatusCode.OK).json(postsTaggingFollowedArtists)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)

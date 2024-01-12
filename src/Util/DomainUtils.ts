@@ -3,7 +3,8 @@ import { selectArtistOfTagName } from "../DB/Queries/Artists"
 import { Artist, Post, User } from "../Models/DrizzleModels"
 import { PostWithTags } from "../Models/Backend/PostWithTags"
 import { selectUserOfId } from "../DB/Queries/Users"
-import { selectArtistsTaggedInPost } from "../DB/Queries/PostArtistTags"
+import { selectArtistsTaggedInPost, selectPostIdsTaggingArtist } from "../DB/Queries/PostArtistTags"
+import { selectPostsOfIds, selectPostsOfUser } from "../DB/Queries/Posts"
 
 export function asTag(text: string) {
   const withoutAccents = removeAccents(text)
@@ -54,4 +55,38 @@ export async function getPostWithTags(post: Post, isAuthorRequired: boolean = tr
     author,
     taggedArtists
   }
+}
+
+export async function fetchPostsTaggingArtist(artistId: number, fromDate: Date): Promise<PostWithTags[]> {
+  const postIdsTaggingArtist: number[] = await selectPostIdsTaggingArtist(artistId)
+  const postsTaggingArtist: Post[] = await selectPostsOfIds(postIdsTaggingArtist, fromDate)
+  const publishedPostsTaggingArtist: Post[] = postsTaggingArtist.filter((post) => !!post.publishedAt)
+
+  const postsWithAuthorAndTagsPromises = publishedPostsTaggingArtist.map(async (post) => {
+    return getPostWithTags(post)
+  })
+
+  return await Promise.all(postsWithAuthorAndTagsPromises)
+}
+
+export async function fetchPostsTaggingArtists(artists: Artist[], fromDate: Date): Promise<PostWithTags[]> {
+  const postsPromises = artists.map(artist => fetchPostsTaggingArtist(artist.id, fromDate))
+  const postsArrays = await Promise.all(postsPromises)
+  return postsArrays.flat()
+}
+
+export async function fetchPostsByAuthor(userId: number, fromDate: Date): Promise<PostWithTags[]> {
+  const authorsPosts: Post[] = await selectPostsOfUser(userId, fromDate)
+
+  const authorsPostsWithTagsPromises = authorsPosts.map(async (post) => {
+    return getPostWithTags(post)
+  })
+
+  return await Promise.all(authorsPostsWithTagsPromises)
+}
+
+export async function fetchPostsByAuthors(authors: User[], fromDate: Date): Promise<PostWithTags[]> {
+  const postsPromises = authors.map(author => fetchPostsByAuthor(author.id, fromDate))
+  const postsArrays = await Promise.all(postsPromises)
+  return postsArrays.flat()
 }

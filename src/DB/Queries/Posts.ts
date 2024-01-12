@@ -1,9 +1,11 @@
 import { NewPost, Post } from "../../Models/DrizzleModels"
 import { db } from "../DB"
 import { posts } from "../_Generated/Drizzle/schema"
-import { and, desc, eq, inArray, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm"
 import _isEmpty from "lodash/isEmpty"
 import { getPostSlug } from "../../Util/DomainUtils"
+
+const postFetchPageSize = 10
 
 export async function insertPost(newPost: NewPost): Promise<Post> {
   const titleForDb = !_isEmpty(newPost.title) ? newPost.title! : null // Replacing "" by null
@@ -97,13 +99,20 @@ export async function selectPostOfId(id: number): Promise<Post | undefined> {
   return rows.at(0)
 }
 
-export async function selectPostsOfIds(ids: number[]): Promise<Post[]> {
+export async function selectPostsOfIds(ids: number[], fromDate: Date): Promise<Post[]> {
   if (_isEmpty(ids)) {
     return []
   }
 
   return db.select().from(posts)
-    .where(inArray(posts.id, ids))
+    .where(and(
+      inArray(posts.id, ids),
+      or(
+        isNull(posts.publishedAt),
+        lt(posts.publishedAt, fromDate.toISOString())
+      )
+    ))
+    .limit(postFetchPageSize)
     .orderBy(desc(posts.publishedAt), desc(posts.id))
 }
 
@@ -118,8 +127,15 @@ export async function selectPostOfUserAndSlug(userId: number, slug: string): Pro
   return rows.at(0)
 }
 
-export async function selectPostsOfUser(userId: number): Promise<Post[]> {
+export async function selectPostsOfUser(userId: number, fromDate: Date): Promise<Post[]> {
   return db.select().from(posts)
-    .where(eq(posts.userId, userId))
+    .where(and(
+      eq(posts.userId, userId),
+      or(
+        isNull(posts.publishedAt),
+        lt(posts.publishedAt, fromDate.toISOString())
+      )
+    ))
+    .limit(postFetchPageSize)
     .orderBy(desc(posts.publishedAt), desc(posts.id))
 }
