@@ -5,9 +5,14 @@ import { deletePost, insertPost, selectPostOfId, selectPostOfUserAndSlug, update
 import { deletePostArtistTags, insertPostArtistTags } from "../DB/Queries/PostArtistTags"
 import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
-import { selectArtistOfTagName, selectArtistsOfIds } from "../DB/Queries/Artists"
-import { fetchPostsByAuthor, fetchPostsTaggingArtist, fetchPostsTaggingArtists, getPostWithTags } from "../Util/DomainUtils"
-import { selectArtistIdsFollowedByUser } from "../DB/Queries/UserFavouriteArtists"
+import { selectArtistOfTagName } from "../DB/Queries/Artists"
+import {
+  fetchArtistsFollowedByUser,
+  fetchPostsByAuthor,
+  fetchPostsTaggingArtist,
+  fetchPostsTaggingArtists,
+  getPostWithTags
+} from "../Util/DomainUtils"
 import { isValidIsoDateString } from "../Util/ValidationUtils"
 
 export function postRoutes(router: Router) {
@@ -286,9 +291,7 @@ export function postRoutes(router: Router) {
 
       // Fetch all followed users
 
-      // Fetch all followed artists
-      const followedArtistIds = await selectArtistIdsFollowedByUser(user.id)
-      const followedArtists: Artist[] = await selectArtistsOfIds(followedArtistIds)
+      const followedArtists: Artist[] = await fetchArtistsFollowedByUser(user.id)
 
       const postsTaggingFollowedArtists = await fetchPostsTaggingArtists(followedArtists, fromDate)
 

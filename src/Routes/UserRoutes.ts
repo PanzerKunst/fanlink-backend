@@ -1,12 +1,13 @@
 import { httpStatusCode } from "../Util/HttpUtils"
 import { Country, Location, NewCountry, NewLocation, NewUser, User } from "../Models/DrizzleModels"
 import { deleteUser, insertUser, selectUserOfId, selectUserOfSpotifyId, selectUserOfUsername, updateUser } from "../DB/Queries/Users"
-import { Request, Response } from "express"
+import { Request, Response, Router } from "express"
 import { GeoapifyFeature } from "../Models/Geoapify/GeoapifyFeature"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "../DB/Queries/Locations"
 import { insertCountry, selectCountryOfCode } from "../DB/Queries/Countries"
 import dayjs from "dayjs"
-import { Router } from "express"
+import { insertUserFollowingAuthor } from "../DB/Queries/UserFollowingAuthors"
+import { getUserWithFollowedArtistsAndAuthors } from "../Util/DomainUtils"
 
 export function userRoutes(router: Router) {
   router.get("/user/spotifyId/:spotifyId", async (req, res) => {
@@ -25,7 +26,9 @@ export function userRoutes(router: Router) {
         return
       }
 
-      res.status(httpStatusCode.OK).json(alreadyStored)
+      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(alreadyStored)
+
+      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -48,7 +51,9 @@ export function userRoutes(router: Router) {
         return
       }
 
-      res.status(httpStatusCode.OK).json(alreadyStored)
+      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(alreadyStored)
+
+      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -102,7 +107,9 @@ export function userRoutes(router: Router) {
         await insertLocation(newLocation)
       }
 
-      res.status(httpStatusCode.OK).json(insertedUser)
+      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(insertedUser)
+
+      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -112,9 +119,10 @@ export function userRoutes(router: Router) {
   router.put("/user", async (req: Request, res: Response) => {
     try {
       const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      const updatedUser = await updateUser(user)
+      const updatedUser: User = await updateUser(user)
+      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(updatedUser)
 
-      res.status(httpStatusCode.OK).json(updatedUser)
+      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -136,6 +144,34 @@ export function userRoutes(router: Router) {
       }
 
       res.sendStatus(httpStatusCode.OK)
+    } catch (error) {
+      console.error(error)
+      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+    }
+  })
+
+  router.post("/userFollowingAuthor", async (req: Request, res: Response) => {
+    try {
+      const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      const storedUser: User | undefined = await selectUserOfId(user.id)
+
+      if (!storedUser) {
+        res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+        return
+      }
+
+      const followedAuthor: User = req.body.followedAuthor as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      const storedAuthor: User | undefined = await selectUserOfId(user.id)
+
+      if (!storedAuthor) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Author not found in DB")
+        return
+      }
+
+      await insertUserFollowingAuthor(storedUser, followedAuthor)
+      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(storedUser)
+
+      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)

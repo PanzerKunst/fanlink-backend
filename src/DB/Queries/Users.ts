@@ -1,7 +1,8 @@
 import { db } from "../DB"
-import { eq, ilike, sql } from "drizzle-orm"
+import { eq, ilike, inArray, sql } from "drizzle-orm"
 import { users } from "../_Generated/Drizzle/schema"
 import { NewUser, User } from "../../Models/DrizzleModels"
+import _isEmpty from "lodash/isEmpty"
 
 export async function insertUser(newUser: NewUser): Promise<User> {
   const query = db.insert(users).values(newUser)
@@ -39,6 +40,15 @@ export async function selectUserOfUsername(username: string): Promise<User | und
     .limit(1)
 
   return rows.at(0)
+}
+
+export async function selectUsersOfIds(ids: number[]): Promise<User[]> {
+  if (_isEmpty(ids)) {
+    return []
+  }
+
+  return db.select().from(users)
+    .where(inArray(users.id, ids))
 }
 
 export async function updateUser(user: User): Promise<User> {

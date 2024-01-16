@@ -1,12 +1,12 @@
 import { pgSql } from "../DB"
 
-export async function migrateTableUserFollowedAuthors() {
-  await createTableUserFollowedAuthors()
+export async function migrateTableUserFollowingAuthors() {
+  await createTableUserFollowingAuthors()
 }
 
-async function createTableUserFollowedAuthors() {
+async function createTableUserFollowingAuthors() {
   await pgSql`
-  CREATE TABLE public.user_followed_authors
+  CREATE TABLE IF NOT EXISTS public.user_following_authors
   (
     id serial,
     created_at timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
