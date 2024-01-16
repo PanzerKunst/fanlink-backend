@@ -9,6 +9,8 @@ select * from artist_music_genres;
 
 select * from posts;
 
+select * from user_following_authors;
+
 SELECT 
     p.id AS post_id,
     p.title,

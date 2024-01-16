@@ -1,3 +1,4 @@
+import _uniqBy from "lodash/uniqBy"
 import { httpStatusCode } from "../Util/HttpUtils"
 import { Artist, NewPost, Post, User } from "../Models/DrizzleModels"
 import { Request, Response, Router } from "express"
@@ -7,8 +8,8 @@ import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
 import { selectArtistOfTagName } from "../DB/Queries/Artists"
 import {
-  fetchArtistsFollowedByUser,
-  fetchPostsByAuthor,
+  fetchArtistsFollowedByUser, fetchAuthorsFollowedByUser,
+  fetchPostsByAuthor, fetchPostsByAuthors,
   fetchPostsTaggingArtist,
   fetchPostsTaggingArtists,
   getPostWithTags
@@ -289,13 +290,15 @@ export function postRoutes(router: Router) {
 
       const fromDate = new Date(from as string)
 
-      // Fetch all followed users
-
       const followedArtists: Artist[] = await fetchArtistsFollowedByUser(user.id)
-
       const postsTaggingFollowedArtists = await fetchPostsTaggingArtists(followedArtists, fromDate)
 
-      res.status(httpStatusCode.OK).json(postsTaggingFollowedArtists)
+      const followedAuthors: User[] = await fetchAuthorsFollowedByUser(user.id)
+      const postsByFollowedAuthors = await fetchPostsByAuthors(followedAuthors, fromDate)
+
+      const result = _uniqBy([...postsTaggingFollowedArtists, ...postsByFollowedAuthors], "post.id")
+
+      res.status(httpStatusCode.OK).json(result)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
