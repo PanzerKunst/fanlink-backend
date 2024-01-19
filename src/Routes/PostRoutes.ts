@@ -216,7 +216,7 @@ export function postRoutes(router: Router) {
 
       const author: User | undefined = await selectUserOfUsername(username)
 
-      if (!author) {
+      if (!author || author.isDeleted) {
         res.status(httpStatusCode.OK).json([])
         return
       }

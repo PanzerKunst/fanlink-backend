@@ -1,46 +1,7 @@
-import { pgTable, foreignKey, unique, serial, timestamp, integer, varchar, numeric, boolean, text } from "drizzle-orm/pg-core"
+import { pgTable, unique, serial, timestamp, varchar, boolean, foreignKey, integer, numeric, text } from "drizzle-orm/pg-core"
 
 import { sql } from "drizzle-orm"
 
-
-export const postArtistTags = pgTable("post_artist_tags", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" } ),
-	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		postArtistTagsPostIdArtistIdKey: unique("post_artist_tags_post_id_artist_id_key").on(table.postId, table.artistId),
-	}
-});
-
-export const userFollowingAuthors = pgTable("user_following_authors", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
-	followedUserId: integer("followed_user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		userFollowingAuthorsUserIdFollowedUserIdKey: unique("user_following_authors_user_id_followed_user_id_key").on(table.userId, table.followedUserId),
-	}
-});
-
-export const userRepresentingArtists = pgTable("user_representing_artists", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
-	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
-},
-(table) => {
-	return {
-		userRepresentingArtistsUserIdArtistIdKey: unique("user_representing_artists_user_id_artist_id_key").on(table.userId, table.artistId),
-	}
-});
 
 export const users = pgTable("users", {
 	id: serial("id").primaryKey().notNull(),
@@ -50,6 +11,7 @@ export const users = pgTable("users", {
 	spotifyId: varchar("spotify_id", { length: 256 }).notNull(),
 	name: varchar("name", { length: 256 }).notNull(),
 	username: varchar("username", { length: 256 }).notNull(),
+	isDeleted: boolean("is_deleted").default(false).notNull(),
 	email: varchar("email", { length: 256 }).notNull(),
 	avatarUrl: varchar("avatar_url", { length: 512 }),
 },
@@ -121,18 +83,6 @@ export const artists = pgTable("artists", {
 	}
 });
 
-export const musicGenres = pgTable("music_genres", {
-	id: serial("id").primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	name: varchar("name", { length: 256 }).notNull(),
-},
-(table) => {
-	return {
-		musicGenresNameKey: unique("music_genres_name_key").on(table.name),
-	}
-});
-
 export const artistMusicGenres = pgTable("artist_music_genres", {
 	id: serial("id").primaryKey().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -143,6 +93,18 @@ export const artistMusicGenres = pgTable("artist_music_genres", {
 (table) => {
 	return {
 		artistMusicGenresArtistIdGenreIdKey: unique("artist_music_genres_artist_id_genre_id_key").on(table.artistId, table.genreId),
+	}
+});
+
+export const musicGenres = pgTable("music_genres", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	name: varchar("name", { length: 256 }).notNull(),
+},
+(table) => {
+	return {
+		musicGenresNameKey: unique("music_genres_name_key").on(table.name),
 	}
 });
 
@@ -201,5 +163,44 @@ export const posts = pgTable("posts", {
 (table) => {
 	return {
 		postsUserIdSlugKey: unique("posts_user_id_slug_key").on(table.userId, table.slug),
+	}
+});
+
+export const postArtistTags = pgTable("post_artist_tags", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	postId: integer("post_id").notNull().references(() => posts.id, { onDelete: "cascade" } ),
+	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		postArtistTagsPostIdArtistIdKey: unique("post_artist_tags_post_id_artist_id_key").on(table.postId, table.artistId),
+	}
+});
+
+export const userFollowingAuthors = pgTable("user_following_authors", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	followedUserId: integer("followed_user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		userFollowingAuthorsUserIdFollowedUserIdKey: unique("user_following_authors_user_id_followed_user_id_key").on(table.userId, table.followedUserId),
+	}
+});
+
+export const userRepresentingArtists = pgTable("user_representing_artists", {
+	id: serial("id").primaryKey().notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
+	artistId: integer("artist_id").notNull().references(() => artists.id, { onDelete: "cascade" } ),
+},
+(table) => {
+	return {
+		userRepresentingArtistsUserIdArtistIdKey: unique("user_representing_artists_user_id_artist_id_key").on(table.userId, table.artistId),
 	}
 });

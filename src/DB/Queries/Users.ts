@@ -42,6 +42,14 @@ export async function selectUserOfUsername(username: string): Promise<User | und
   return rows.at(0)
 }
 
+export async function selectUserOfEmail(email: string): Promise<User | undefined> {
+  const rows = await db.select().from(users)
+    .where(ilike(users.email, email))
+    .limit(1)
+
+  return rows.at(0)
+}
+
 export async function selectUsersOfIds(ids: number[]): Promise<User[]> {
   if (_isEmpty(ids)) {
     return []
@@ -71,7 +79,22 @@ export async function updateUser(user: User): Promise<User> {
   return row
 }
 
-export async function deleteUser(user: User): Promise<void> {
-  await db.delete(users)
+export async function updateUserAsDeleted(user: User): Promise<User> {
+  const query =  db.update(users)
+    .set({
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+      isDeleted: true,
+      spotifyId: `DELETED_${user.spotifyId}`,
+      email: `DELETED_${user.email}`
+    })
     .where(eq(users.id, user.id))
+
+  const rows = await query.returning()
+  const row = rows.at(0)
+
+  if (!row) {
+    throw new Error("Failed to udpate user as deleted")
+  }
+
+  return row
 }

@@ -16,6 +16,7 @@ async function createTableUsers() {
     spotify_id character varying(256) NOT NULL UNIQUE,
     name character varying(256) NOT NULL,
     username character varying(256) NOT NULL UNIQUE,
+    is_deleted boolean NOT NULL default FALSE,
     PRIMARY KEY (id)
   )`
 }
