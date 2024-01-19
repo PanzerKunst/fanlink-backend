@@ -2,14 +2,23 @@ import _uniqBy from "lodash/uniqBy"
 import { httpStatusCode } from "../Util/HttpUtils"
 import { Artist, NewPost, Post, User } from "../Models/DrizzleModels"
 import { Request, Response, Router } from "express"
-import { deletePost, insertPost, selectPostOfId, selectPostOfUserAndSlug, updatePost, updatePostPublicationStatusAndSlug } from "../DB/Queries/Posts"
+import {
+  deletePost,
+  insertPost,
+  selectPostOfId,
+  selectPostOfUserAndSlug,
+  updatePost,
+  updatePostPublicationSettingsAndSlug
+} from "../DB/Queries/Posts"
 import { deletePostArtistTags, insertPostArtistTags } from "../DB/Queries/PostArtistTags"
 import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
 import { selectArtistOfTagName } from "../DB/Queries/Artists"
 import {
-  fetchArtistsFollowedByUser, fetchAuthorsFollowedByUser,
-  fetchPostsByAuthor, fetchPostsByAuthors,
+  fetchArtistsFollowedByUser,
+  fetchAuthorsFollowedByUser,
+  fetchPostsByAuthor,
+  fetchPostsByAuthors,
   fetchPostsTaggingArtist,
   fetchPostsTaggingArtists,
   getPostWithTags
@@ -53,6 +62,13 @@ export function postRoutes(router: Router) {
         return
       }
 
+      const storedPost: Post | undefined = await selectPostOfId(post.id)
+
+      if (!storedPost) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
+        return
+      }
+
       const taggedArtists: Artist[] = req.body.taggedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
       if (taggedArtists.length > 2) {
@@ -72,26 +88,19 @@ export function postRoutes(router: Router) {
     }
   })
 
-  // Publish or unpublish
-  router.put("/post/:id", async (req: Request, res: Response) => {
+  router.put("/post/publication", async (req: Request, res: Response) => {
     try {
-      const { id } = req.params
-      const postId = parseInt(id || "")
-
-      if (isNaN(postId)) {
-        res.status(httpStatusCode.BAD_REQUEST).send("Missing or incorrect 'id' in path")
-        return
-      }
-
-      const storedPost: Post | undefined = await selectPostOfId(postId)
-
-      if (!storedPost) {
-        res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
-        return
-      }
+      const post: Post = req.body.post as Post // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
       if (!("publish" in req.query)) {
         res.status(httpStatusCode.BAD_REQUEST).send("Missing 'publish' query param")
+        return
+      }
+
+      const storedPost: Post | undefined = await selectPostOfId(post.id)
+
+      if (!storedPost) {
+        res.status(httpStatusCode.BAD_REQUEST).send("Post not found in DB")
         return
       }
 
@@ -102,7 +111,7 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const updatedPost: Post = await updatePostPublicationStatusAndSlug(storedPost, req.query.publish === "true")
+      const updatedPost: Post = await updatePostPublicationSettingsAndSlug(post, req.query.publish === "true")
       const postWithAuthorAndTags = await getPostWithTags(updatedPost)
 
       res.status(httpStatusCode.OK).json(postWithAuthorAndTags)

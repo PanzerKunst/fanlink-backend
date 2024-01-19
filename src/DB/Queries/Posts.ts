@@ -12,6 +12,7 @@ export async function insertPost(newPost: NewPost): Promise<Post> {
 
   const newPostForDb: NewPost = {
     ...newPost,
+    accessTier: 0,
     title: titleForDb
   }
 
@@ -35,6 +36,7 @@ export async function updatePost(post: Post): Promise<Post> {
     .set({
       updatedAt: sql`CURRENT_TIMESTAMP`,
       publishedAt: post.publishedAt,
+      accessTier: post.accessTier,
       title: titleForDb,
       content: post.content,
       heroImagePath: post.heroImagePath || null,
@@ -52,7 +54,7 @@ export async function updatePost(post: Post): Promise<Post> {
   return row
 }
 
-export async function updatePostPublicationStatusAndSlug(post: Post, isPublishing: boolean): Promise<Post> {
+export async function updatePostPublicationSettingsAndSlug(post: Post, isPublishing: boolean): Promise<Post> {
   let slug = post.slug
 
   // We never change the slug once set
@@ -72,6 +74,7 @@ export async function updatePostPublicationStatusAndSlug(post: Post, isPublishin
     .set({
       updatedAt: sql`CURRENT_TIMESTAMP`,
       publishedAt: isPublishing ? sql`CURRENT_TIMESTAMP` : null,
+      accessTier: post.accessTier,
       slug
     })
     .where(eq(posts.id, post.id))
@@ -80,7 +83,7 @@ export async function updatePostPublicationStatusAndSlug(post: Post, isPublishin
   const row = rows.at(0)
 
   if (!row) {
-    throw new Error("Failed to update post publication status and slug")
+    throw new Error("Failed to update post publication settings and slug")
   }
 
   return row
