@@ -1,13 +1,13 @@
 import { removeAccents, removePunctuation, stripHtml } from "./StringUtils"
 import { selectArtistOfTagName, selectArtistsOfIds } from "../DB/Queries/Artists"
 import { Artist, Post, User } from "../Models/DrizzleModels"
-import { PostWithTags } from "../Models/Backend/PostWithTags"
 import { selectUserOfId, selectUsersOfIds } from "../DB/Queries/Users"
 import { selectArtistsTaggedInPost, selectPostIdsTaggingArtist } from "../DB/Queries/PostArtistTags"
 import { selectPostsOfIds, selectPostsOfUser } from "../DB/Queries/Posts"
-import { UserWithFollowedArtistsAndAuthors } from "../Models/Backend/UserWithFollowedArtistsAndAuthors"
 import { selectArtistIdsFollowedByUser } from "../DB/Queries/UserFavouriteArtists"
 import { selectAuthorIdsFollowedByUser } from "../DB/Queries/UserFollowingAuthors"
+import { PostWithTags } from "../Models/Backend/PostWithMore"
+import { UserWithFollowedArtistsAndAuthors } from "../Models/Backend/UserWithMore"
 
 export function asTag(text: string) {
   const withoutAccents = removeAccents(text)

@@ -42,7 +42,7 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const insertedPost = await insertPost(newPost)
+      const insertedPost: Post = await insertPost(newPost)
       await insertPostArtistTags(insertedPost, taggedArtists)
       const postWithTags = await getPostWithTags(insertedPost, false)
 

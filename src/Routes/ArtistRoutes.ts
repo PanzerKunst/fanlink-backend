@@ -5,8 +5,7 @@ import { SpotifyArtist } from "../Models/Spotify/SpotifyArtist"
 import _isEmpty from "lodash/isEmpty"
 import { insertArtist, selectArtistOfSpotifyId, selectArtistOfTagName, selectArtistsOfSpotifyIds } from "../DB/Queries/Artists"
 import { insertMusicGenres, selectMusicGenresOfNames } from "../DB/Queries/MusicGenres"
-import { insertArtistMusicGenres, selectMusicGenresForArtists } from "../DB/Queries/ArtistMusicGenres"
-import { ArtistWithGenres } from "../Models/Backend/ArtistWithGenres"
+import { insertArtistMusicGenres } from "../DB/Queries/ArtistMusicGenres"
 import { insertUserFavouriteArtists } from "../DB/Queries/UserFavouriteArtists"
 
 export function artistRoutes(router: Router) {
@@ -47,9 +46,8 @@ export function artistRoutes(router: Router) {
       }
 
       const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
-      const artistAndTheirGenres: ArtistWithGenres[] = await selectMusicGenresForArtists(artists)
 
-      res.status(httpStatusCode.OK).json(artistAndTheirGenres)
+      res.status(httpStatusCode.OK).json(artists)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
