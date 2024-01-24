@@ -98,3 +98,8 @@ export async function updateUserAsDeleted(user: User): Promise<User> {
 
   return row
 }
+
+export async function deleteUserAndTheirPosts(userId: number): Promise<void> {
+  await db.delete(users)
+    .where(eq(users.id, userId))
+}

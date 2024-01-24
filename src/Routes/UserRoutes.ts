@@ -7,7 +7,7 @@ import {
   selectUserOfId,
   selectUserOfSpotifyId,
   selectUserOfUsername,
-  updateUser
+  updateUser, deleteUserAndTheirPosts
 } from "../DB/Queries/Users"
 import { Request, Response, Router } from "express"
 import { GeoapifyFeature } from "../Models/Geoapify/GeoapifyFeature"
@@ -123,6 +123,14 @@ export function userRoutes(router: Router) {
   router.delete("/user", async (req: Request, res: Response) => {
     try {
       const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+      const { deletePosts } = req.query
+
+      if (deletePosts !== "true" && deletePosts !== "false") { // Because `if (!["true", "false"].includes(deletePosts))` gives a TS error
+        res.status(httpStatusCode.BAD_REQUEST).send("Incorrect query params")
+        return
+      }
+
       const storedUser: User | undefined = await selectUserOfId(user.id)
 
       if (!storedUser) {
@@ -131,7 +139,11 @@ export function userRoutes(router: Router) {
       }
 
       if (dayjs(storedUser.createdAt).isSame(dayjs(user.createdAt), "millisecond")) {
-        await updateUserAsDeleted(user)
+        if (deletePosts === "true") {
+          await deleteUserAndTheirPosts(user.id)
+        } else {
+          await updateUserAsDeleted(user)
+        }
       }
 
       res.sendStatus(httpStatusCode.OK)

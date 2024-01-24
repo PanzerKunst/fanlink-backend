@@ -166,7 +166,7 @@ export const posts = pgTable("posts", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	publishedAt: timestamp("published_at", { withTimezone: true, mode: 'string' }),
-	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "set null" } ),
+	userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" } ),
 	accessTier: integer("access_tier").notNull(),
 	slug: varchar("slug", { length: 256 }),
 	title: varchar("title", { length: 256 }),

@@ -24,7 +24,7 @@ async function createTablePosts() {
     FOREIGN KEY (user_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION
-        ON DELETE SET NULL
+        ON DELETE CASCADE
         NOT VALID
   )`
 }
