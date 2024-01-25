@@ -10,6 +10,7 @@ export async function insertArtist(spotifyArtist: SpotifyArtist): Promise<Artist
   const newArtist: NewArtist = {
     spotifyId: spotifyArtist.id,
     name: spotifyArtist.name,
+    avatarUrl: spotifyArtist.images[0]?.url || null,
     tagName: await getAvailableArtistTagName(spotifyArtist.name)
   }
 

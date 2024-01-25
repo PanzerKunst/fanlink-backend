@@ -44,14 +44,14 @@ export async function updatePost(post: Post): Promise<Post> {
     })
     .where(eq(posts.id, post.id))
 
-  const rows = await query.returning()
-  const row = rows.at(0)
+  const updatedRows = await query.returning()
+  const updatedRow = updatedRows.at(0)
 
-  if (!row) {
+  if (!updatedRow) {
     throw new Error("Failed to update post")
   }
 
-  return row
+  return updatedRow
 }
 
 export async function updatePostPublicationSettingsAndSlug(post: Post, isPublishing: boolean): Promise<Post> {
@@ -79,14 +79,14 @@ export async function updatePostPublicationSettingsAndSlug(post: Post, isPublish
     })
     .where(eq(posts.id, post.id))
 
-  const rows = await query.returning()
-  const row = rows.at(0)
+  const updatedRows = await query.returning()
+  const updatedRow = updatedRows.at(0)
 
-  if (!row) {
+  if (!updatedRow) {
     throw new Error("Failed to update post publication settings and slug")
   }
 
-  return row
+  return updatedRow
 }
 
 export async function deletePost(post: Post): Promise<void> {

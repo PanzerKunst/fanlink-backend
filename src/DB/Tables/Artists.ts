@@ -13,6 +13,7 @@ async function createTableArtists() {
     updated_at timestamp with time zone NOT NULL default CURRENT_TIMESTAMP,
     spotify_id character varying(256) NOT NULL UNIQUE,
     name character varying(128) NOT NULL,
+    avatar_url character varying(512),
     tag_name character varying(128) NOT NULL,
     PRIMARY KEY (id)
   )`

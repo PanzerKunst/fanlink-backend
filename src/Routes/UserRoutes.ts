@@ -1,5 +1,5 @@
 import { httpStatusCode } from "../Util/HttpUtils"
-import { Country, Location, NewCountry, NewLocation, NewUser, User } from "../Models/DrizzleModels"
+import { Artist, Country, Location, NewCountry, NewLocation, NewUser, User } from "../Models/DrizzleModels"
 import {
   updateUserAsDeleted,
   insertUser,
@@ -14,8 +14,11 @@ import { GeoapifyFeature } from "../Models/Geoapify/GeoapifyFeature"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "../DB/Queries/Locations"
 import { insertCountry, selectCountryOfCode } from "../DB/Queries/Countries"
 import dayjs from "dayjs"
-import { insertUserFollowingAuthor } from "../DB/Queries/UserFollowingAuthors"
+import { insertUserFollowingAuthor, selectAuthorIdsFollowedByUser, updateFollowedAuthors } from "../DB/Queries/UserFollowingAuthors"
 import { getUserWithFollowedArtistsAndAuthors } from "../Util/DomainUtils"
+import _isEmpty from "lodash/isEmpty"
+import { SpotifyArtist } from "../Models/Spotify/SpotifyArtist"
+import { insertFavouriteArtists, selectArtistIdsFollowedByUser, updateFollowedArtists } from "../DB/Queries/UserFavouriteArtists"
 
 export function userRoutes(router: Router) {
   router.get("/user", async (req, res) => {
@@ -153,7 +156,30 @@ export function userRoutes(router: Router) {
     }
   })
 
-  router.post("/userFollowingAuthor", async (req: Request, res: Response) => {
+  router.post("/favouriteArtists", async (req: Request, res: Response) => {
+    try {
+      const userFavourites: Artist[] = req.body.favouriteArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+      if (_isEmpty(userFavourites)) {
+        res.status(httpStatusCode.OK).json([])
+        return
+      }
+
+      const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const followedArtists: SpotifyArtist[] = req.body.followedArtists as SpotifyArtist[]
+
+      await insertFavouriteArtists(user, userFavourites, followedArtists)
+
+      res.status(httpStatusCode.OK).json(userFavourites)
+    } catch (error) {
+      console.error(error)
+      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+    }
+  })
+
+  router.post("/followingAuthor", async (req: Request, res: Response) => {
     try {
       const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
       const storedUser: User | undefined = await selectUserOfId(user.id)
@@ -175,6 +201,50 @@ export function userRoutes(router: Router) {
       const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(storedUser)
 
       res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
+    } catch (error) {
+      console.error(error)
+      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+    }
+  })
+
+  router.put("/followedArtists", async (req: Request, res: Response) => {
+    try {
+      const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+      const storedUser: User | undefined = await selectUserOfId(user.id)
+
+      if (!storedUser) {
+        res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+        return
+      }
+
+      const followedArtists: Artist[] = req.body.followedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      const storedFollowedArtistIds: number[] = await selectArtistIdsFollowedByUser(storedUser.id)
+      const unfollowedArtistIds = await updateFollowedArtists(user, storedFollowedArtistIds, followedArtists)
+
+      res.status(httpStatusCode.OK).json(unfollowedArtistIds)
+    } catch (error) {
+      console.error(error)
+      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
+    }
+  })
+
+  router.put("/followedAuthors", async (req: Request, res: Response) => {
+    try {
+      const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+
+      const storedUser: User | undefined = await selectUserOfId(user.id)
+
+      if (!storedUser) {
+        res.status(httpStatusCode.BAD_REQUEST).send("User not found in DB")
+        return
+      }
+
+      const followedAuthors: User[] = req.body.followedAuthors as User[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      const storedFollowedAuthorIds: number[] = await selectAuthorIdsFollowedByUser(storedUser.id)
+      const unfollowedAuthorIds = await updateFollowedAuthors(user, storedFollowedAuthorIds, followedAuthors)
+
+      res.status(httpStatusCode.OK).json(unfollowedAuthorIds)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)

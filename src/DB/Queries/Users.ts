@@ -69,14 +69,14 @@ export async function updateUser(user: User): Promise<User> {
     })
     .where(eq(users.id, user.id))
 
-  const rows = await query.returning()
-  const row = rows.at(0)
+  const updatedRows = await query.returning()
+  const updatedRow = updatedRows.at(0)
 
-  if (!row) {
+  if (!updatedRow) {
     throw new Error("Failed to update user")
   }
 
-  return row
+  return updatedRow
 }
 
 export async function updateUserAsDeleted(user: User): Promise<User> {
@@ -89,14 +89,14 @@ export async function updateUserAsDeleted(user: User): Promise<User> {
     })
     .where(eq(users.id, user.id))
 
-  const rows = await query.returning()
-  const row = rows.at(0)
+  const updatedRows = await query.returning()
+  const updatedRow = updatedRows.at(0)
 
-  if (!row) {
+  if (!updatedRow) {
     throw new Error("Failed to udpate user as deleted")
   }
 
-  return row
+  return updatedRow
 }
 
 export async function deleteUserAndTheirPosts(userId: number): Promise<void> {

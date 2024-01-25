@@ -1,12 +1,11 @@
 import { httpStatusCode } from "../Util/HttpUtils"
-import { Artist, MusicGenre, User } from "../Models/DrizzleModels"
+import { Artist, MusicGenre } from "../Models/DrizzleModels"
 import { Request, Response, Router } from "express"
 import { SpotifyArtist } from "../Models/Spotify/SpotifyArtist"
 import _isEmpty from "lodash/isEmpty"
 import { insertArtist, selectArtistOfSpotifyId, selectArtistOfTagName, selectArtistsOfSpotifyIds } from "../DB/Queries/Artists"
 import { insertMusicGenres, selectMusicGenresOfNames } from "../DB/Queries/MusicGenres"
 import { insertArtistMusicGenres } from "../DB/Queries/ArtistMusicGenres"
-import { insertUserFavouriteArtists } from "../DB/Queries/UserFavouriteArtists"
 
 export function artistRoutes(router: Router) {
   router.post("/artists", async (req: Request, res: Response) => {
@@ -48,29 +47,6 @@ export function artistRoutes(router: Router) {
       const artists: Artist[] = await selectArtistsOfSpotifyIds(spotifyArtists.map((spotifyArtist) => spotifyArtist.id))
 
       res.status(httpStatusCode.OK).json(artists)
-    } catch (error) {
-      console.error(error)
-      res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
-    }
-  })
-
-  router.post("/userFavouriteArtists", async (req: Request, res: Response) => {
-    try {
-      const userFavourites: Artist[] = req.body.favouriteArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-
-      if (_isEmpty(userFavourites)) {
-        res.status(httpStatusCode.OK).json([])
-        return
-      }
-
-      const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const followedArtists: SpotifyArtist[] = req.body.followedArtists as SpotifyArtist[]
-
-      await insertUserFavouriteArtists(user, userFavourites, followedArtists)
-
-      res.status(httpStatusCode.OK).json(userFavourites)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)

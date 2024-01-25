@@ -3,9 +3,9 @@ import { db } from "../DB"
 import { userFavouriteArtists } from "../_Generated/Drizzle/schema"
 import { Artist, NewUserFavouriteArtist, User, UserFavouriteArtist } from "../../Models/DrizzleModels"
 import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
-import { and, eq } from "drizzle-orm"
+import { and, eq, inArray, sql } from "drizzle-orm"
 
-export async function insertUserFavouriteArtists(
+export async function insertFavouriteArtists(
   user: User,
   favouriteArtists: Artist[],
   followedArtists: SpotifyArtist[]
@@ -34,4 +34,26 @@ export async function selectArtistIdsFollowedByUser(userId: number): Promise<num
     ))
 
   return followedArtists.map((userFavouriteArtist) => userFavouriteArtist.artistId)
+}
+
+export async function updateFollowedArtists(
+  user: User,
+  currentlyFollowedArtistIds: number[],
+  newFollowedArtists: Artist[]
+): Promise<number[]> {
+  const unfollowedArtistIds = currentlyFollowedArtistIds.filter((artistId) => !newFollowedArtists.some((artist) => artist.id === artistId))
+
+  const query = db.update(userFavouriteArtists)
+    .set({
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+      isFollowing: false
+    })
+    .where(and(
+      eq(userFavouriteArtists.userId, user.id),
+      inArray(userFavouriteArtists.artistId, unfollowedArtistIds)
+    ))
+
+  const updatedRows = await query.returning()
+
+  return updatedRows.map((userFavouriteArtist) => userFavouriteArtist.artistId)
 }
