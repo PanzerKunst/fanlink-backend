@@ -24,6 +24,7 @@ import {
   getPostWithTags
 } from "../Util/DomainUtils"
 import { isValidIsoDateString } from "../Util/ValidationUtils"
+import { insertPostLike } from "../DB/Queries/PostLIkes"
 
 export function postRoutes(router: Router) {
   router.post("/post", async (req: Request, res: Response) => {
@@ -43,7 +44,7 @@ export function postRoutes(router: Router) {
       }
 
       const insertedPost: Post = await insertPost(newPost)
-      await insertPostArtistTags(insertedPost, taggedArtists)
+      await insertPostArtistTags(insertedPost.id, taggedArtists)
       const postWithTags = await getPostWithTags(insertedPost, false)
 
       res.status(httpStatusCode.OK).json(postWithTags)
@@ -77,8 +78,8 @@ export function postRoutes(router: Router) {
       }
 
       const updatedPost = await updatePost(post)
-      await deletePostArtistTags(updatedPost)
-      await insertPostArtistTags(updatedPost, taggedArtists)
+      await deletePostArtistTags(updatedPost.id)
+      await insertPostArtistTags(updatedPost.id, taggedArtists)
       const postWithTags = await getPostWithTags(updatedPost, false)
 
       res.status(httpStatusCode.OK).json(postWithTags)
@@ -111,7 +112,13 @@ export function postRoutes(router: Router) {
         return
       }
 
-      const updatedPost: Post = await updatePostPublicationSettingsAndSlug(post, req.query.publish === "true")
+      const isPublishing = req.query.publish === "true"
+      const updatedPost: Post = await updatePostPublicationSettingsAndSlug(post, isPublishing)
+
+      if (isPublishing) {
+        await insertPostLike(post.id, author.id)
+      }
+
       const postWithAuthorAndTags = await getPostWithTags(updatedPost)
 
       res.status(httpStatusCode.OK).json(postWithAuthorAndTags)

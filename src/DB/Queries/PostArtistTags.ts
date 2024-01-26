@@ -1,17 +1,17 @@
 import _isEmpty from "lodash/isEmpty"
 import { db } from "../DB"
 import { postArtistTags } from "../_Generated/Drizzle/schema"
-import { Artist, NewPostArtistTag, Post, PostArtistTag } from "../../Models/DrizzleModels"
+import { Artist, NewPostArtistTag, PostArtistTag } from "../../Models/DrizzleModels"
 import { eq } from "drizzle-orm"
 import { selectArtistsOfIds } from "./Artists"
 
-export async function insertPostArtistTags(post: Post, taggedArtists: Artist[]): Promise<PostArtistTag[]> {
+export async function insertPostArtistTags(postId: number, taggedArtists: Artist[]): Promise<PostArtistTag[]> {
   if (_isEmpty(taggedArtists)) {
     return []
   }
 
   const postArtistTagsToInsert: NewPostArtistTag[] = taggedArtists.map((artist: Artist) => ({
-    postId: post.id,
+    postId: postId,
     artistId: artist.id
   }))
 
@@ -21,9 +21,9 @@ export async function insertPostArtistTags(post: Post, taggedArtists: Artist[]):
   return query.returning()
 }
 
-export async function deletePostArtistTags(post: Post): Promise<PostArtistTag[]> {
+export async function deletePostArtistTags(postId: number): Promise<PostArtistTag[]> {
   const query = db.delete(postArtistTags)
-    .where(eq(postArtistTags.postId, post.id))
+    .where(eq(postArtistTags.postId, postId))
 
   return query.returning()
 }

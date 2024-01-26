@@ -13,6 +13,7 @@ import { fileRoutes } from "./Routes/FileRoutes"
 import { postRoutes } from "./Routes/PostRoutes"
 import { userRoutes } from "./Routes/UserRoutes"
 import dayjs from "dayjs"
+import { postLikeRoutes } from "./Routes/PostLikeRoutes"
 
 const app = express()
 const port = config.PORT
@@ -73,6 +74,7 @@ const router = Router()
 
 artistRoutes(router)
 fileRoutes(router)
+postLikeRoutes(router)
 postRoutes(router)
 userRoutes(router)
 

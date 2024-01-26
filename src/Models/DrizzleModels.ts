@@ -3,9 +3,12 @@ import {
   artists,
   countries,
   locations,
-  musicGenres, postArtistTags,
+  musicGenres,
+  postArtistTags,
+  postLikes,
   posts,
-  userFavouriteArtists, userFollowingAuthors,
+  userFavouriteArtists,
+  userFollowingAuthors,
   userLocations,
   userRepresentingArtists,
   users
@@ -40,6 +43,9 @@ export type NewPost = typeof posts.$inferInsert;
 
 export type PostArtistTag = typeof postArtistTags.$inferSelect;
 export type NewPostArtistTag = typeof postArtistTags.$inferInsert;
+
+export type PostLike = typeof postLikes.$inferSelect;
+export type NewPostLike = typeof postLikes.$inferInsert;
 
 export type UserFollowingAuthor = typeof userFollowingAuthors.$inferSelect;
 export type NewUserFollowingAuthor = typeof userFollowingAuthors.$inferInsert;
