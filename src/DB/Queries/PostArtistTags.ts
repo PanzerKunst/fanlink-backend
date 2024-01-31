@@ -5,9 +5,9 @@ import { Artist, NewPostArtistTag, PostArtistTag } from "../../Models/DrizzleMod
 import { eq } from "drizzle-orm"
 import { selectArtistsOfIds } from "./Artists"
 
-export async function insertPostArtistTags(postId: number, taggedArtists: Artist[]): Promise<PostArtistTag[]> {
+export async function insertPostArtistTags(postId: number, taggedArtists: Artist[]) {
   if (_isEmpty(taggedArtists)) {
-    return []
+    return
   }
 
   const postArtistTagsToInsert: NewPostArtistTag[] = taggedArtists.map((artist: Artist) => ({
@@ -15,10 +15,8 @@ export async function insertPostArtistTags(postId: number, taggedArtists: Artist
     artistId: artist.id
   }))
 
-  const query = db.insert(postArtistTags).values(postArtistTagsToInsert)
+  await db.insert(postArtistTags).values(postArtistTagsToInsert)
     .onConflictDoNothing()
-
-  return query.returning()
 }
 
 export async function deletePostArtistTags(postId: number): Promise<PostArtistTag[]> {

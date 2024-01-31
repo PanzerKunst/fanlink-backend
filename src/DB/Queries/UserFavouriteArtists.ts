@@ -5,13 +5,9 @@ import { Artist, NewUserFavouriteArtist, User, UserFavouriteArtist } from "../..
 import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
 import { and, eq, inArray, sql } from "drizzle-orm"
 
-export async function insertFavouriteArtists(
-  user: User,
-  favouriteArtists: Artist[],
-  followedArtists: SpotifyArtist[]
-): Promise<UserFavouriteArtist[]> {
+export async function insertFavouriteArtists(user: User, favouriteArtists: Artist[], followedArtists: SpotifyArtist[]) {
   if (_isEmpty(favouriteArtists)) {
-    return []
+    return
   }
 
   const userFavouriteArtistsToInsert: NewUserFavouriteArtist[] = favouriteArtists.map((favouriteArtist) => ({
@@ -20,10 +16,8 @@ export async function insertFavouriteArtists(
     isFollowing: followedArtists.some((followedArtist) => followedArtist.id === favouriteArtist.spotifyId)
   }))
 
-  const query = db.insert(userFavouriteArtists).values(userFavouriteArtistsToInsert)
+  await db.insert(userFavouriteArtists).values(userFavouriteArtistsToInsert)
     .onConflictDoNothing()
-
-  return query.returning()
 }
 
 export async function selectArtistIdsFollowedByUser(userId: number): Promise<number[]> {

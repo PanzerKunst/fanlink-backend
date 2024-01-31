@@ -3,18 +3,9 @@ import { Location, NewLocation } from "../../Models/DrizzleModels"
 import { locations } from "../_Generated/Drizzle/schema"
 import { eq } from "drizzle-orm"
 
-export async function insertLocation(newLocation: NewLocation): Promise<Location> {
-  const query = db.insert(locations).values(newLocation)
+export async function insertLocation(newLocation: NewLocation) {
+  await db.insert(locations).values(newLocation)
     .onConflictDoNothing()
-
-  const rows = await query.returning()
-  const row = rows.at(0)
-
-  if (!row) {
-    throw new Error("Failed to insert location")
-  }
-
-  return row
 }
 
 export async function selectLocationOfGeoapifyPlaceId(geoapifyPlaceId: string): Promise<Location | undefined> {

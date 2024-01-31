@@ -20,11 +20,7 @@ export async function insertArtist(spotifyArtist: SpotifyArtist): Promise<Artist
   const rows = await query.returning()
   const row = rows.at(0)
 
-  if (!row) {
-    throw new Error("Failed to insert artist")
-  }
-
-  return row
+  return row || (await selectArtistOfSpotifyId(spotifyArtist.id))!
 }
 
 export async function selectArtistsOfIds(ids: number[]): Promise<Artist[]> {

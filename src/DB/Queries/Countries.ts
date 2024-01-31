@@ -10,11 +10,7 @@ export async function insertCountry(newCountry: NewCountry): Promise<Country> {
   const rows = await query.returning()
   const row = rows.at(0)
 
-  if (!row) {
-    throw new Error("Failed to insert country")
-  }
-
-  return row
+  return row || (await selectCountryOfCode(newCountry.code))!
 }
 
 export async function selectCountryOfCode(code: string): Promise<Country | undefined> {

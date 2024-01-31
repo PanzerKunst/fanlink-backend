@@ -4,18 +4,16 @@ import { db } from "../DB"
 import { musicGenres } from "../_Generated/Drizzle/schema"
 import _isEmpty from "lodash/isEmpty"
 
-export async function insertMusicGenres(names: string[]): Promise<MusicGenre[]> {
+export async function insertMusicGenres(names: string[]) {
   if (_isEmpty(names)) {
-    return []
+    return
   }
 
   const uniqueGenres: string[] = Array.from(new Set(names))
 
   const musicGenresToInsert: NewMusicGenre[] = uniqueGenres.map((name) => ({ name }))
-  const query = db.insert(musicGenres).values(musicGenresToInsert)
+  await db.insert(musicGenres).values(musicGenresToInsert)
     .onConflictDoNothing()
-
-  return query.returning()
 }
 
 export async function selectAllMusicGenres(): Promise<MusicGenre[]> {

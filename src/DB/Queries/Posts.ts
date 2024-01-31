@@ -17,7 +17,7 @@ export async function insertPost(newPost: NewPost): Promise<Post> {
   }
 
   const query = db.insert(posts).values(newPostForDb)
-    .onConflictDoNothing()
+  // .onConflictDoNothing() Commented out on purpose
 
   const rows = await query.returning()
   const row = rows.at(0)

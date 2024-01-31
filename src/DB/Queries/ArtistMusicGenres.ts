@@ -1,11 +1,11 @@
 import _isEmpty from "lodash/isEmpty"
 import { db } from "../DB"
 import { artistMusicGenres } from "../_Generated/Drizzle/schema"
-import { Artist, ArtistMusicGenre, MusicGenre, NewArtistMusicGenre } from "../../Models/DrizzleModels"
+import { Artist, MusicGenre, NewArtistMusicGenre } from "../../Models/DrizzleModels"
 
-export async function insertArtistMusicGenres(artist: Artist, genres: MusicGenre[]): Promise<ArtistMusicGenre[]> {
+export async function insertArtistMusicGenres(artist: Artist, genres: MusicGenre[]) {
   if (_isEmpty(genres)) {
-    return []
+    return
   }
 
   const artistMusicGenresToInsert: NewArtistMusicGenre[] = genres.map((genre) => ({
@@ -13,10 +13,8 @@ export async function insertArtistMusicGenres(artist: Artist, genres: MusicGenre
     genreId: genre.id
   }))
 
-  const query = db.insert(artistMusicGenres).values(artistMusicGenresToInsert)
+  await db.insert(artistMusicGenres).values(artistMusicGenresToInsert)
     .onConflictDoNothing()
-
-  return query.returning()
 }
 
 /* export async function selectMusicGenresForArtist(artist: Artist): Promise<MusicGenre[]> {

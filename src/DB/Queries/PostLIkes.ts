@@ -3,20 +3,11 @@ import { postLikes } from "../_Generated/Drizzle/schema"
 import { NewPostLike, PostLike } from "../../Models/DrizzleModels"
 import { and, eq } from "drizzle-orm"
 
-export async function insertPostLike(postId: number, userId: number): Promise<PostLike> {
+export async function insertPostLike(postId: number, userId: number) {
   const newPostLike: NewPostLike = { postId, userId }
 
-  const query = db.insert(postLikes).values(newPostLike)
+  await db.insert(postLikes).values(newPostLike)
     .onConflictDoNothing()
-
-  const rows = await query.returning()
-  const row = rows.at(0)
-
-  if (!row) {
-    throw new Error("Failed to insert post like")
-  }
-
-  return row
 }
 
 export async function deletePostLike(postId: number, userId: number): Promise<void> {

@@ -6,7 +6,7 @@ import _isEmpty from "lodash/isEmpty"
 
 export async function insertUser(newUser: NewUser): Promise<User> {
   const query = db.insert(users).values(newUser)
-    .onConflictDoNothing()
+  // .onConflictDoNothing() Commented out on purpose
 
   const rows = await query.returning()
   const row = rows.at(0)

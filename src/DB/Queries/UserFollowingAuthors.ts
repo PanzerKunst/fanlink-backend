@@ -3,16 +3,14 @@ import { userFollowingAuthors } from "../_Generated/Drizzle/schema"
 import { NewUserFollowingAuthor, User, UserFollowingAuthor } from "../../Models/DrizzleModels"
 import { and, eq, inArray } from "drizzle-orm"
 
-export async function insertUserFollowingAuthor(user: User, followedAuthor: User): Promise<UserFollowingAuthor[]> {
+export async function insertUserFollowingAuthor(user: User, followedAuthor: User) {
   const userFollowingAuthorToInsert: NewUserFollowingAuthor = {
     userId: user.id,
     followedUserId: followedAuthor.id
   }
 
-  const query = db.insert(userFollowingAuthors).values(userFollowingAuthorToInsert)
+  await db.insert(userFollowingAuthors).values(userFollowingAuthorToInsert)
     .onConflictDoNothing()
-
-  return query.returning()
 }
 
 export async function selectAuthorIdsFollowedByUser(userId: number): Promise<number[]> {
