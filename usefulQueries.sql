@@ -11,6 +11,8 @@ select * from posts;
 
 select * from post_likes;
 
+select * from user_favourite_artists;
+
 select * from user_following_authors;
 
 SELECT 

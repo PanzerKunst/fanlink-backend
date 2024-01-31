@@ -39,3 +39,8 @@ export async function updateFollowedAuthors(
 
   return deletedRows.map((userFollowingAuthor) => userFollowingAuthor.followedUserId)
 }
+
+export async function deleteFollowedAuthorsForUser(user: User): Promise<void> {
+  await db.delete(userFollowingAuthors)
+    .where(eq(userFollowingAuthors.userId, user.id))
+}

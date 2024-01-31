@@ -14,11 +14,21 @@ import { GeoapifyFeature } from "../Models/Geoapify/GeoapifyFeature"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "../DB/Queries/Locations"
 import { insertCountry, selectCountryOfCode } from "../DB/Queries/Countries"
 import dayjs from "dayjs"
-import { insertUserFollowingAuthor, selectAuthorIdsFollowedByUser, updateFollowedAuthors } from "../DB/Queries/UserFollowingAuthors"
+import {
+  deleteFollowedAuthorsForUser,
+  insertUserFollowingAuthor,
+  selectAuthorIdsFollowedByUser,
+  updateFollowedAuthors
+} from "../DB/Queries/UserFollowingAuthors"
 import { getUserWithFollowedArtistsAndAuthors } from "../Util/DomainUtils"
 import _isEmpty from "lodash/isEmpty"
 import { SpotifyArtist } from "../Models/Spotify/SpotifyArtist"
-import { insertFavouriteArtists, selectArtistIdsFollowedByUser, updateFollowedArtists } from "../DB/Queries/UserFavouriteArtists"
+import {
+  deleteFollowedArtistsForUser,
+  insertFavouriteArtists,
+  selectArtistIdsFollowedByUser,
+  updateFollowedArtists
+} from "../DB/Queries/UserFavouriteArtists"
 
 export function userRoutes(router: Router) {
   router.get("/user", async (req, res) => {
@@ -146,6 +156,8 @@ export function userRoutes(router: Router) {
           await deleteUserAndTheirPosts(user.id)
         } else {
           await updateUserAsDeleted(user)
+          await deleteFollowedArtistsForUser(user)
+          await deleteFollowedAuthorsForUser(user)
         }
       }
 
