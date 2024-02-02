@@ -13,6 +13,7 @@ import {
   userRepresentingArtists,
   users
 } from "../DB/_Generated/Drizzle/schema"
+import { Currency } from "./Backend/Currency"
 
 export type MusicGenre = typeof musicGenres.$inferSelect; // return type when queried
 export type NewMusicGenre = typeof musicGenres.$inferInsert; // insert type
@@ -52,3 +53,17 @@ export type NewUserFollowingAuthor = typeof userFollowingAuthors.$inferInsert;
 
 export type UserRepresentingArtist = typeof userRepresentingArtists.$inferSelect;
 export type NewUserRepresentingArtist = typeof userRepresentingArtists.$inferInsert;
+
+// TODO
+export type NewPremiumSubscription = {
+  userId: number,
+  email: string,
+  stripePaymentMethodId: string,
+  currency: Currency,
+}
+
+export type PremiumSubscription = NewPremiumSubscription & {
+  id: number,
+  createdAt: string,
+  updatedAt: string,
+}
