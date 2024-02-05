@@ -20,25 +20,17 @@ export async function selectAuthorIdsFollowedByUser(userId: number): Promise<num
   return followedAuthors.map((userFollowingArtist) => userFollowingArtist.followedUserId)
 }
 
-export async function updateFollowedAuthors(
-  user: User,
-  currentlyFollowedAuthorIds: number[],
-  newFollowedAuthors: User[]
-): Promise<number[]> {
-  const unfollowedAuthorIds = currentlyFollowedAuthorIds.filter((authorId) => !newFollowedAuthors.some((author) => author.id === authorId))
+export async function deleteSelectedFollowedAuthors(user: User, authorsToDelete: User[] ) {
+  const userIdsToDelete = authorsToDelete.map((user) => user.id)
 
-  const query = db.delete(userFollowingAuthors)
+  await db.delete(userFollowingAuthors)
     .where(and(
       eq(userFollowingAuthors.userId, user.id),
-      inArray(userFollowingAuthors.followedUserId, unfollowedAuthorIds)
+      inArray(userFollowingAuthors.userId, userIdsToDelete)
     ))
-
-  const deletedRows = await query.returning()
-
-  return deletedRows.map((userFollowingAuthor) => userFollowingAuthor.followedUserId)
 }
 
-export async function deleteFollowedAuthorsForUser(user: User): Promise<void> {
+export async function deleteAllFollowedAuthorsForUser(user: User) {
   await db.delete(userFollowingAuthors)
     .where(eq(userFollowingAuthors.userId, user.id))
 }

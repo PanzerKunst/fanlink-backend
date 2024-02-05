@@ -15,6 +15,7 @@ async function createTableUserFavouriteArtists() {
     user_id integer NOT NULL,
     artist_id integer NOT NULL,
     is_following boolean NOT NULL,
+    is_manual_subscription boolean NOT NULL default FALSE,
     PRIMARY KEY (id),
     UNIQUE (user_id, artist_id),
     FOREIGN KEY (user_id)

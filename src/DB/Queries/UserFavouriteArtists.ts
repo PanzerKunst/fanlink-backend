@@ -3,7 +3,7 @@ import { db } from "../DB"
 import { userFavouriteArtists } from "../_Generated/Drizzle/schema"
 import { Artist, NewUserFavouriteArtist, User, UserFavouriteArtist } from "../../Models/DrizzleModels"
 import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
-import { and, eq, inArray, sql } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 
 export async function insertFavouriteArtists(user: User, favouriteArtists: Artist[], followedArtists: SpotifyArtist[]) {
   if (_isEmpty(favouriteArtists)) {
@@ -30,29 +30,17 @@ export async function selectArtistIdsFollowedByUser(userId: number): Promise<num
   return followedArtists.map((userFavouriteArtist) => userFavouriteArtist.artistId)
 }
 
-export async function updateFollowedArtists(
-  user: User,
-  currentlyFollowedArtistIds: number[],
-  newFollowedArtists: Artist[]
-): Promise<number[]> {
-  const unfollowedArtistIds = currentlyFollowedArtistIds.filter((artistId) => !newFollowedArtists.some((artist) => artist.id === artistId))
-
-  const query = db.update(userFavouriteArtists)
-    .set({
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-      isFollowing: false
-    })
-    .where(and(
-      eq(userFavouriteArtists.userId, user.id),
-      inArray(userFavouriteArtists.artistId, unfollowedArtistIds)
-    ))
-
-  const updatedRows = await query.returning()
-
-  return updatedRows.map((userFavouriteArtist) => userFavouriteArtist.artistId)
-}
-
-export async function deleteFollowedArtistsForUser(user: User): Promise<void> {
+export async function deleteAllFavouriteArtistsForUser(user: User) {
   await db.delete(userFavouriteArtists)
     .where(eq(userFavouriteArtists.userId, user.id))
+}
+
+export async function deleteSelectedFavouriteArtists(user: User, artistsToDelete: Artist[]) {
+  const artistIdsToDelete = artistsToDelete.map((artist) => artist.id)
+
+  await db.delete(userFavouriteArtists)
+    .where(and(
+      eq(userFavouriteArtists.userId, user.id),
+      inArray(userFavouriteArtists.artistId, artistIdsToDelete)
+    ))
 }

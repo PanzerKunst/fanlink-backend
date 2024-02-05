@@ -1,34 +1,25 @@
 import { httpStatusCode } from "../Util/HttpUtils"
 import { Artist, Country, Location, NewCountry, NewLocation, NewUser, User } from "../Models/DrizzleModels"
 import {
-  updateUserAsDeleted,
+  deleteUserAndTheirPosts,
   insertUser,
   selectUserOfEmail,
   selectUserOfId,
   selectUserOfSpotifyId,
   selectUserOfUsername,
-  updateUser, deleteUserAndTheirPosts
+  updateUser,
+  updateUserAsDeleted
 } from "../DB/Queries/Users"
 import { Request, Response, Router } from "express"
 import { GeoapifyFeature } from "../Models/Geoapify/GeoapifyFeature"
 import { insertLocation, selectLocationOfGeoapifyPlaceId } from "../DB/Queries/Locations"
 import { insertCountry, selectCountryOfCode } from "../DB/Queries/Countries"
 import dayjs from "dayjs"
-import {
-  deleteFollowedAuthorsForUser,
-  insertUserFollowingAuthor,
-  selectAuthorIdsFollowedByUser,
-  updateFollowedAuthors
-} from "../DB/Queries/UserFollowingAuthors"
+import { deleteAllFollowedAuthorsForUser, deleteSelectedFollowedAuthors, insertUserFollowingAuthor } from "../DB/Queries/UserFollowingAuthors"
 import { getUserWithFollowedArtistsAndAuthors } from "../Util/DomainUtils"
 import _isEmpty from "lodash/isEmpty"
 import { SpotifyArtist } from "../Models/Spotify/SpotifyArtist"
-import {
-  deleteFollowedArtistsForUser,
-  insertFavouriteArtists,
-  selectArtistIdsFollowedByUser,
-  updateFollowedArtists
-} from "../DB/Queries/UserFavouriteArtists"
+import { deleteAllFavouriteArtistsForUser, deleteSelectedFavouriteArtists, insertFavouriteArtists } from "../DB/Queries/UserFavouriteArtists"
 
 export function userRoutes(router: Router) {
   router.get("/user", async (req, res) => {
@@ -156,8 +147,8 @@ export function userRoutes(router: Router) {
           await deleteUserAndTheirPosts(user.id)
         } else {
           await updateUserAsDeleted(user)
-          await deleteFollowedArtistsForUser(user)
-          await deleteFollowedAuthorsForUser(user)
+          await deleteAllFavouriteArtistsForUser(user)
+          await deleteAllFollowedAuthorsForUser(user)
         }
       }
 
@@ -219,7 +210,7 @@ export function userRoutes(router: Router) {
     }
   })
 
-  router.put("/followedArtists", async (req: Request, res: Response) => {
+  router.delete("/favouriteArtists", async (req: Request, res: Response) => {
     try {
       const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
@@ -230,18 +221,17 @@ export function userRoutes(router: Router) {
         return
       }
 
-      const followedArtists: Artist[] = req.body.followedArtists as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      const storedFollowedArtistIds: number[] = await selectArtistIdsFollowedByUser(storedUser.id)
-      const unfollowedArtistIds = await updateFollowedArtists(user, storedFollowedArtistIds, followedArtists)
+      const artistsToRemove: Artist[] = req.body.artistsToRemove as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      await deleteSelectedFavouriteArtists(user, artistsToRemove)
 
-      res.status(httpStatusCode.OK).json(unfollowedArtistIds)
+      res.sendStatus(httpStatusCode.OK)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
     }
   })
 
-  router.put("/followedAuthors", async (req: Request, res: Response) => {
+  router.delete("/followedAuthors", async (req: Request, res: Response) => {
     try {
       const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
@@ -252,11 +242,10 @@ export function userRoutes(router: Router) {
         return
       }
 
-      const followedAuthors: User[] = req.body.followedAuthors as User[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      const storedFollowedAuthorIds: number[] = await selectAuthorIdsFollowedByUser(storedUser.id)
-      const unfollowedAuthorIds = await updateFollowedAuthors(user, storedFollowedAuthorIds, followedAuthors)
+      const authorsToRemove: User[] = req.body.authorsToRemove as User[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
+      await deleteSelectedFollowedAuthors(user, authorsToRemove)
 
-      res.status(httpStatusCode.OK).json(unfollowedAuthorIds)
+      res.sendStatus(httpStatusCode.OK)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
