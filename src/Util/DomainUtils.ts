@@ -1,13 +1,14 @@
 import { removeAccents, removePunctuation, stripHtml } from "./StringUtils"
 import { selectArtistOfTagName, selectArtistsOfIds } from "../DB/Queries/Artists"
-import { Artist, Post, User } from "../Models/DrizzleModels"
+import { Artist, Post, User, UserFavouriteArtist } from "../Models/DrizzleModels"
 import { selectUserOfId, selectUsersOfIds } from "../DB/Queries/Users"
 import { selectArtistsTaggedInPost, selectPostIdsTaggingArtist } from "../DB/Queries/PostArtistTags"
 import { selectPostsOfIds, selectPostsOfUser } from "../DB/Queries/Posts"
-import { selectArtistIdsFollowedByUser } from "../DB/Queries/UserFavouriteArtists"
+import { selectFavouriteArtists } from "../DB/Queries/UserFavouriteArtists"
 import { selectAuthorIdsFollowedByUser } from "../DB/Queries/UserFollowingAuthors"
 import { PostWithTags } from "../Models/Backend/PostWithMore"
-import { UserWithFollowedArtistsAndAuthors } from "../Models/Backend/UserWithMore"
+import { UserWithFavouriteArtistsAndAuthors } from "../Models/Backend/UserWithMore"
+import { ArtistWithFollowStatus } from "../Models/Backend/ArtistWithMore"
 
 export function asTag(text: string) {
   const withoutAccents = removeAccents(text)
@@ -36,7 +37,7 @@ export async function getAvailableArtistTagName(artistName: string): Promise<str
   let tagName = idealTagName
   let suffix = 0
 
-  while(await selectArtistOfTagName(tagName)) {
+  while (await selectArtistOfTagName(tagName)) {
     suffix += 1
     tagName = `${idealTagName}${suffix}`
   }
@@ -94,9 +95,15 @@ export async function fetchPostsByAuthors(authors: User[], fromDate: Date): Prom
   return postsArrays.flat()
 }
 
-export async function fetchArtistsFollowedByUser(userId: number): Promise<Artist[]> {
-  const followedArtistIds = await selectArtistIdsFollowedByUser(userId)
-  return await selectArtistsOfIds(followedArtistIds)
+export async function fetchUserFavouriteArtists(userId: number): Promise<ArtistWithFollowStatus[]> {
+  const userFavouriteArtists: UserFavouriteArtist[] = await selectFavouriteArtists(userId)
+  const userFavouriteArtistsIds = userFavouriteArtists.map((userFavouriteArtist) => userFavouriteArtist.artistId)
+  const favouriteArtists: Artist[] = await selectArtistsOfIds(userFavouriteArtistsIds)
+
+  return favouriteArtists.map((artist: Artist) => ({
+    artist,
+    isFollowed: userFavouriteArtists.some((userFavouriteArtist) => userFavouriteArtist.artistId === artist.id && userFavouriteArtist.isFollowing)
+  }))
 }
 
 export async function fetchAuthorsFollowedByUser(userId: number): Promise<User[]> {
@@ -104,13 +111,13 @@ export async function fetchAuthorsFollowedByUser(userId: number): Promise<User[]
   return await selectUsersOfIds(followedAuthorIds)
 }
 
-export async function getUserWithFollowedArtistsAndAuthors(user: User): Promise<UserWithFollowedArtistsAndAuthors> {
-  const followedArtists = await fetchArtistsFollowedByUser(user.id)
+export async function getUserWithFavouriteArtistsAndAuthors(user: User): Promise<UserWithFavouriteArtistsAndAuthors> {
+  const favouriteArtists = await fetchUserFavouriteArtists(user.id)
   const followedAuthors = await fetchAuthorsFollowedByUser(user.id)
 
   return {
     user,
-    followedArtists,
+    favouriteArtists,
     followedAuthors
   }
 }

@@ -3,7 +3,8 @@ import { db } from "../DB"
 import { userFavouriteArtists } from "../_Generated/Drizzle/schema"
 import { Artist, NewUserFavouriteArtist, User, UserFavouriteArtist } from "../../Models/DrizzleModels"
 import { SpotifyArtist } from "../../Models/Spotify/SpotifyArtist"
-import { and, eq, inArray } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
+import { ArtistWithFollowStatus } from "../../Models/Backend/ArtistWithMore"
 
 export async function insertFavouriteArtists(user: User, favouriteArtists: Artist[], followedArtists: SpotifyArtist[]) {
   if (_isEmpty(favouriteArtists)) {
@@ -20,14 +21,9 @@ export async function insertFavouriteArtists(user: User, favouriteArtists: Artis
     .onConflictDoNothing()
 }
 
-export async function selectArtistIdsFollowedByUser(userId: number): Promise<number[]> {
-  const followedArtists: UserFavouriteArtist[] = await db.select().from(userFavouriteArtists)
-    .where(and(
-      eq(userFavouriteArtists.userId, userId),
-      eq(userFavouriteArtists.isFollowing, true)
-    ))
-
-  return followedArtists.map((userFavouriteArtist) => userFavouriteArtist.artistId)
+export async function selectFavouriteArtists(userId: number): Promise<UserFavouriteArtist[]> {
+  return db.select().from(userFavouriteArtists)
+    .where(eq(userFavouriteArtists.userId, userId))
 }
 
 export async function deleteAllFavouriteArtistsForUser(user: User) {
@@ -35,12 +31,16 @@ export async function deleteAllFavouriteArtistsForUser(user: User) {
     .where(eq(userFavouriteArtists.userId, user.id))
 }
 
-export async function deleteSelectedFavouriteArtists(user: User, artistsToDelete: Artist[]) {
-  const artistIdsToDelete = artistsToDelete.map((artist) => artist.id)
+export async function updateUserFavouriteArtist(user: User, artistWithFollowStatus: ArtistWithFollowStatus) {
+  const { artist, isFollowed } = artistWithFollowStatus
 
-  await db.delete(userFavouriteArtists)
+  await db.update(userFavouriteArtists)
+    .set({
+      updatedAt: sql`CURRENT_TIMESTAMP`,
+      isFollowing: isFollowed
+    })
     .where(and(
       eq(userFavouriteArtists.userId, user.id),
-      inArray(userFavouriteArtists.artistId, artistIdsToDelete)
+      eq(userFavouriteArtists.artistId, artist.id)
     ))
 }

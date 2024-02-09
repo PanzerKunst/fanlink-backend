@@ -15,7 +15,7 @@ import { selectUserOfId, selectUserOfUsername } from "../DB/Queries/Users"
 import dayjs from "dayjs"
 import { selectArtistOfTagName } from "../DB/Queries/Artists"
 import {
-  fetchArtistsFollowedByUser,
+  fetchUserFavouriteArtists,
   fetchAuthorsFollowedByUser,
   fetchPostsByAuthor,
   fetchPostsByAuthors,
@@ -25,6 +25,7 @@ import {
 } from "../Util/DomainUtils"
 import { isValidIsoDateString } from "../Util/ValidationUtils"
 import { insertPostLike } from "../DB/Queries/PostLIkes"
+import { ArtistWithFollowStatus } from "../Models/Backend/ArtistWithMore"
 
 export function postRoutes(router: Router) {
   router.post("/post", async (req: Request, res: Response) => {
@@ -306,7 +307,11 @@ export function postRoutes(router: Router) {
 
       const fromDate = new Date(from as string)
 
-      const followedArtists: Artist[] = await fetchArtistsFollowedByUser(user.id)
+      const favouriteArtists: ArtistWithFollowStatus[] = await fetchUserFavouriteArtists(user.id)
+
+      const followedArtists = favouriteArtists.filter(({ isFollowed}) => !!isFollowed)
+        .map(({ artist }) => artist)
+
       const postsTaggingFollowedArtists = await fetchPostsTaggingArtists(followedArtists, fromDate)
 
       const followedAuthors: User[] = await fetchAuthorsFollowedByUser(user.id)

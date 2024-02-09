@@ -1,7 +1,8 @@
-import { Artist, User } from "../DrizzleModels"
+import { User } from "../DrizzleModels"
+import { ArtistWithFollowStatus } from "./ArtistWithMore"
 
-export type UserWithFollowedArtistsAndAuthors = {
+export type UserWithFavouriteArtistsAndAuthors = {
   user: User;
-  followedArtists: Artist[];
+  favouriteArtists: ArtistWithFollowStatus[];
   followedAuthors: User[];
 }

@@ -1,5 +1,5 @@
 import { httpStatusCode } from "../Util/HttpUtils"
-import { Artist, Country, Location, NewCountry, NewLocation, NewUser, User } from "../Models/DrizzleModels"
+import { Artist, Country, Location, NewCountry, NewLocation, NewUser, User, UserFavouriteArtist } from "../Models/DrizzleModels"
 import {
   deleteUserAndTheirPosts,
   insertUser,
@@ -16,10 +16,16 @@ import { insertLocation, selectLocationOfGeoapifyPlaceId } from "../DB/Queries/L
 import { insertCountry, selectCountryOfCode } from "../DB/Queries/Countries"
 import dayjs from "dayjs"
 import { deleteAllFollowedAuthorsForUser, deleteSelectedFollowedAuthors, insertUserFollowingAuthor } from "../DB/Queries/UserFollowingAuthors"
-import { getUserWithFollowedArtistsAndAuthors } from "../Util/DomainUtils"
+import { getUserWithFavouriteArtistsAndAuthors } from "../Util/DomainUtils"
 import _isEmpty from "lodash/isEmpty"
 import { SpotifyArtist } from "../Models/Spotify/SpotifyArtist"
-import { deleteAllFavouriteArtistsForUser, deleteSelectedFavouriteArtists, insertFavouriteArtists } from "../DB/Queries/UserFavouriteArtists"
+import {
+  deleteAllFavouriteArtistsForUser,
+  updateUserFavouriteArtist,
+  insertFavouriteArtists,
+  selectFavouriteArtists
+} from "../DB/Queries/UserFavouriteArtists"
+import { ArtistWithFollowStatus } from "../Models/Backend/ArtistWithMore"
 
 export function userRoutes(router: Router) {
   router.get("/user", async (req, res) => {
@@ -46,9 +52,9 @@ export function userRoutes(router: Router) {
         return
       }
 
-      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(alreadyStored)
+      const userWithFavouriteArtistsAndAuthors = await getUserWithFavouriteArtistsAndAuthors(alreadyStored)
 
-      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
+      res.status(httpStatusCode.OK).json(userWithFavouriteArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -102,9 +108,9 @@ export function userRoutes(router: Router) {
         await insertLocation(newLocation)
       }
 
-      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(insertedUser)
+      const userWithFavouriteArtistsAndAuthors = await getUserWithFavouriteArtistsAndAuthors(insertedUser)
 
-      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
+      res.status(httpStatusCode.OK).json(userWithFavouriteArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -115,9 +121,9 @@ export function userRoutes(router: Router) {
     try {
       const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
       const updatedUser: User = await updateUser(user)
-      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(updatedUser)
+      const userWithFavouriteArtistsAndAuthors = await getUserWithFavouriteArtistsAndAuthors(updatedUser)
 
-      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
+      res.status(httpStatusCode.OK).json(userWithFavouriteArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
@@ -201,16 +207,16 @@ export function userRoutes(router: Router) {
       }
 
       await insertUserFollowingAuthor(storedUser, followedAuthor)
-      const userWithFollowedArtistsAndAuthors = await getUserWithFollowedArtistsAndAuthors(storedUser)
+      const userWithFavouriteArtistsAndAuthors = await getUserWithFavouriteArtistsAndAuthors(storedUser)
 
-      res.status(httpStatusCode.OK).json(userWithFollowedArtistsAndAuthors)
+      res.status(httpStatusCode.OK).json(userWithFavouriteArtistsAndAuthors)
     } catch (error) {
       console.error(error)
       res.status(httpStatusCode.INTERNAL_SERVER_ERROR).json(error)
     }
   })
 
-  router.delete("/favouriteArtists", async (req: Request, res: Response) => {
+  router.put("/favouriteArtists", async (req: Request, res: Response) => {
     try {
       const user: User = req.body.user as User // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
@@ -221,8 +227,23 @@ export function userRoutes(router: Router) {
         return
       }
 
-      const artistsToRemove: Artist[] = req.body.artistsToRemove as Artist[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access
-      await deleteSelectedFavouriteArtists(user, artistsToRemove)
+      const artistsWithFollowStatus: ArtistWithFollowStatus[] = req.body.artistsWithFollowStatus as ArtistWithFollowStatus[] // eslint-disable-line @typescript-eslint/no-unsafe-member-access, max-len
+      const storedFavouriteArtists: UserFavouriteArtist[] = await selectFavouriteArtists(user.id)
+
+      // Loop through `storedFavouriteArtists`, find the corresponding `artist` in `artistsWithFollowStatus`.
+      // If `storedFavouriteArtist.isFollowing` is different than `artistsWithFollowStatus.isFollowed`,
+      // Call `updateUserFavouriteArtist` with `user` and `artistWithFollowStatus` as arguments.
+      for (const storedFavouriteArtist of storedFavouriteArtists) {
+        const artistWithFollowStatus = artistsWithFollowStatus.find(({ artist }) => artist.id === storedFavouriteArtist.artistId)
+
+        if (!artistWithFollowStatus) {
+          throw new Error("artistWithFollowStatus not found in artistsWithFollowStatus array")
+        }
+
+        if (storedFavouriteArtist.isFollowing !== artistWithFollowStatus.isFollowed) {
+          await updateUserFavouriteArtist(user, artistWithFollowStatus)
+        }
+      }
 
       res.sendStatus(httpStatusCode.OK)
     } catch (error) {
